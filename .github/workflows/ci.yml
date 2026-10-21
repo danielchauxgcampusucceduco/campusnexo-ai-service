@@ -1,0 +1,25 @@
+name: AI service
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install with pinned versions
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: pytest -q
+      - name: Container image (without vision)
+        run: docker build -t campusnexo-ai:${{ github.sha }} .
