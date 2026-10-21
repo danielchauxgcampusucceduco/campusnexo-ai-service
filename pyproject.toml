@@ -25,3 +25,5 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The tests import the eval tool as well as the app package.
+pythonpath = ["."]
