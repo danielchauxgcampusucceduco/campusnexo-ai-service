@@ -24,11 +24,21 @@ def test_filter_rejects_invalid_measurements_without_poisoning_its_state():
     import pytest
 
     kalman = KalmanOccupancy()
-    for values in ((None, float("nan"), 2), (None, 500, -1), (1.5, 500, 2)):
+    for values in ((None, float("nan"), 2), (None, 500, -1), (1.5, 500, 2), (1001, 500, 2), (None, 500, 10001)):
         with pytest.raises(ValueError):
             kalman.update(*values)
     assert kalman.estimate == 0.0
     assert kalman.variance == 1.0
+
+
+def test_filter_rejects_sensor_values_outside_the_public_api_contract():
+    import pytest
+
+    kalman = KalmanOccupancy()
+    with pytest.raises(ValueError, match="co2_ppm"):
+        kalman.update(None, 10001, 1)
+    with pytest.raises(ValueError, match="outdoor_co2_ppm"):
+        kalman.update(None, 500, 1, 1001)
 
 
 def test_filter_rejects_invalid_initial_covariance():

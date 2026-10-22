@@ -36,21 +36,21 @@ class KalmanOccupancy:
                 raise ValueError(f"{name} debe ser finito")
         if self.process_variance < 0 or self.measurement_variance <= 0 or self.variance < 0:
             raise ValueError("Las varianzas deben ser no negativas y la varianza de medición positiva")
-        if self.estimate < 0:
-            raise ValueError("estimate debe ser no negativo")
+        if not 0 <= self.estimate <= 1000:
+            raise ValueError("estimate debe estar entre 0 y 1000")
 
     def update(self, yolo_count: int | None, co2_ppm: float, wifi_devices: int,
                outdoor_co2_ppm: float = 415.0) -> tuple[int, float]:
         if yolo_count is not None and (
-            isinstance(yolo_count, bool) or not isinstance(yolo_count, int) or yolo_count < 0
+            isinstance(yolo_count, bool) or not isinstance(yolo_count, int) or not 0 <= yolo_count <= 1000
         ):
-            raise ValueError("yolo_count debe ser un entero no negativo o None")
-        if isinstance(wifi_devices, bool) or not isinstance(wifi_devices, int) or wifi_devices < 0:
-            raise ValueError("wifi_devices debe ser un entero no negativo")
-        if not math.isfinite(co2_ppm) or co2_ppm < 0:
-            raise ValueError("co2_ppm debe ser finito y no negativo")
-        if not math.isfinite(outdoor_co2_ppm) or outdoor_co2_ppm < 0:
-            raise ValueError("outdoor_co2_ppm debe ser finito y no negativo")
+            raise ValueError("yolo_count debe ser un entero entre 0 y 1000 o None")
+        if isinstance(wifi_devices, bool) or not isinstance(wifi_devices, int) or not 0 <= wifi_devices <= 10000:
+            raise ValueError("wifi_devices debe ser un entero entre 0 y 10000")
+        if not math.isfinite(co2_ppm) or not 0 <= co2_ppm <= 10000:
+            raise ValueError("co2_ppm debe estar entre 0 y 10000")
+        if not math.isfinite(outdoor_co2_ppm) or not 300 <= outdoor_co2_ppm <= 1000:
+            raise ValueError("outdoor_co2_ppm debe estar entre 300 y 1000")
         co2_estimate = max(0.0, (co2_ppm - outdoor_co2_ppm) / CO2_PPM_PER_PERSON)
         wifi_estimate = max(0, wifi_devices) * PEOPLE_PER_WIFI_DEVICE
         if yolo_count is not None:
