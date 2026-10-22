@@ -113,14 +113,31 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
     }
 
 
+def read_rows(handle) -> list[dict]:
+    reader = csv.DictReader(handle)
+    headers = reader.fieldnames
+    if not headers:
+        raise ValueError("el CSV debe incluir un encabezado")
+    duplicates = sorted({header for header in headers if headers.count(header) > 1})
+    if duplicates:
+        raise ValueError(f"encabezados duplicados: {', '.join(duplicates)}")
+    missing = [column for column in REQUIRED if column not in headers]
+    if missing:
+        raise ValueError(f"faltan columnas requeridas: {', '.join(missing)}")
+    return list(reader)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("csv", type=Path)
     parser.add_argument("--tolerance", type=nonnegative_finite, default=2.0, help="personas de error aceptadas")
     parser.add_argument("--json", type=Path, help="guardar el resultado en este archivo")
     args = parser.parse_args()
-    with args.csv.open(newline="", encoding="utf-8") as handle:
-        rows = list(csv.DictReader(handle))
+    try:
+        with args.csv.open(newline="", encoding="utf-8-sig") as handle:
+            rows = read_rows(handle)
+    except (OSError, ValueError) as exc:
+        parser.error(f"no se pudo leer el CSV: {exc}")
     if not rows:
         sys.exit("El CSV no tiene filas: no hay nada que medir.")
     try:

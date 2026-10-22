@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from eval.evaluate import evaluate, main
+from eval.evaluate import evaluate, main, read_rows
 
 
 def test_evaluation_reports_error_metrics_by_space_in_stable_key_order():
@@ -111,3 +111,17 @@ def test_cli_reports_invalid_csv_rows_without_a_traceback(tmp_path, monkeypatch,
 
     assert error.value.code == 2
     assert "fila 2: co2_ppm" in capsys.readouterr().err
+
+
+def test_csv_reader_rejects_duplicate_headers_before_values_are_overwritten():
+    import io
+
+    with pytest.raises(ValueError, match="encabezados duplicados: co2_ppm"):
+        read_rows(io.StringIO("space_id,co2_ppm,wifi_devices,true_people,co2_ppm\nA-301,500,4,5,700\n"))
+
+
+def test_csv_reader_reports_missing_required_columns_at_the_header():
+    import io
+
+    with pytest.raises(ValueError, match="faltan columnas requeridas: wifi_devices"):
+        read_rows(io.StringIO("space_id,co2_ppm,true_people\nA-301,500,5\n"))
