@@ -64,3 +64,14 @@ def test_thermal_endpoint_rejects_boolean_occupancy_and_fractional_horizon():
     })
 
     assert response.status_code == 422
+
+
+def test_thermal_endpoint_rejects_boolean_temperature_instead_of_coercing_it():
+    response = client.post("/v1/thermal/recommendation", json={
+        "current_temp_c": True,
+        "outside_temp_c": 14,
+        "occupancy": 18,
+        "lighting_kw": 1.4,
+    })
+
+    assert response.status_code == 422

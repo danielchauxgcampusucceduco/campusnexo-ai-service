@@ -131,6 +131,14 @@ def test_occupancy_api_rejects_boolean_counts_in_integer_measurement_fields():
     assert response.status_code == 422
 
 
+def test_occupancy_api_rejects_boolean_co2_measurement():
+    response = TestClient(app).post("/v1/occupancy/estimate", json={
+        "space_id": "A-301", "co2_ppm": True, "wifi_devices": 5,
+    })
+
+    assert response.status_code == 422
+
+
 def test_evaluation_reports_error_metrics_from_the_given_rows():
     rows = [{"space_id": "A", "yolo_people": "5", "co2_ppm": "500", "wifi_devices": "5", "outdoor_co2_ppm": "415",
              "true_people": "5"} for _ in range(10)]
