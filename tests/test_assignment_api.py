@@ -52,6 +52,15 @@ def test_assignment_endpoint_rejects_invalid_course_and_room_fields():
     assert response.status_code == 422
 
 
+def test_assignment_endpoint_rejects_boolean_attendance_and_capacity():
+    response = client.post("/v1/rooms/assignment", json={
+        "courses": [{"course_id": "IS-101", "attendance": True}],
+        "rooms": [{"room_id": "A-301", "capacity": True, "power_kw": 1}],
+    })
+
+    assert response.status_code == 422
+
+
 def test_assignment_endpoint_rejects_zero_capacity_before_utilization_division():
     response = client.post(
         "/v1/rooms/assignment",

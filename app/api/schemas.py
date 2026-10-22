@@ -18,9 +18,9 @@ class StrictInput(BaseModel):
 
 class OccupancyInput(StrictInput):
     space_id: str = Field(min_length=1, max_length=32)
-    yolo_people: int | None = Field(default=None, ge=0, le=1000)
+    yolo_people: int | None = Field(default=None, ge=0, le=1000, strict=True)
     co2_ppm: float = Field(ge=0, le=10000)
-    wifi_devices: int = Field(ge=0, le=10000)
+    wifi_devices: int = Field(ge=0, le=10000, strict=True)
     outdoor_co2_ppm: float = Field(default=415, ge=300, le=1000)
 
     @field_validator("space_id")
@@ -46,12 +46,12 @@ class OccupancyBatchInput(StrictInput):
 class ThermalInput(StrictInput):
     current_temp_c: float = Field(ge=-20, le=60)
     outside_temp_c: float = Field(ge=-30, le=60)
-    occupancy: int = Field(ge=0, le=1000)
+    occupancy: int = Field(ge=0, le=1000, strict=True)
     lighting_kw: float = Field(ge=0, le=100)
     resistance_c_per_kw: float = Field(default=2.4, ge=MIN_THERMAL_PARAMETER, le=1000)
     capacitance_kwh_per_c: float = Field(default=1.85, ge=MIN_THERMAL_PARAMETER, le=1000)
     comfort_limit_c: float = Field(default=24.5, ge=10, le=35)
-    horizon_min: int = Field(default=20, ge=1, le=MAX_THERMAL_HORIZON_MINUTES)
+    horizon_min: int = Field(default=20, ge=1, le=MAX_THERMAL_HORIZON_MINUTES, strict=True)
 
 
 class AssignmentInput(StrictInput):
@@ -72,7 +72,7 @@ class AssignmentInput(StrictInput):
 
 class CourseAssignmentInput(StrictInput):
     course_id: str = Field(min_length=1, max_length=64)
-    attendance: int = Field(ge=0, le=1000)
+    attendance: int = Field(ge=0, le=1000, strict=True)
 
     @field_validator("course_id")
     @classmethod
@@ -85,7 +85,7 @@ class CourseAssignmentInput(StrictInput):
 
 class RoomAssignmentInput(StrictInput):
     room_id: str = Field(min_length=1, max_length=64)
-    capacity: int = Field(ge=1, le=1000)
+    capacity: int = Field(ge=1, le=1000, strict=True)
     power_kw: float = Field(ge=0, le=1000)
 
     @field_validator("room_id")

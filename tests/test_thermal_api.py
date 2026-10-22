@@ -52,3 +52,15 @@ def test_thermal_endpoint_rejects_unknown_fields_instead_of_ignoring_typos():
     )
 
     assert response.status_code == 422
+
+
+def test_thermal_endpoint_rejects_boolean_occupancy_and_fractional_horizon():
+    response = client.post("/v1/thermal/recommendation", json={
+        "current_temp_c": 22,
+        "outside_temp_c": 14,
+        "occupancy": True,
+        "lighting_kw": 1.4,
+        "horizon_min": 12.5,
+    })
+
+    assert response.status_code == 422
