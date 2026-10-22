@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from app.api.schemas import (
     AssignmentOutput,
     AssignmentInput,
+    CapabilitiesOutput,
     DeskStateOutput,
     OccupancyEstimateOutput,
     OccupancyInput,
@@ -21,6 +22,32 @@ app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estim
 
 @app.get("/health")
 def health(): return {"status": "ok", "vision": "optional; enabled when the vision extra and weights are available"}
+
+
+@app.get("/v1/capabilities", response_model=CapabilitiesOutput)
+def capabilities():
+    return {
+        "service": "CampusNexo AI Service",
+        "api_version": "v1",
+        "features": [
+            {"name": "occupancy", "mode": "kalman_escalar_pesos_fijos_no_calibrado",
+             "summary": "Estimación con cámara opcional, CO2 y Wi-Fi; confidence_pct no es probabilidad."},
+            {"name": "thermal", "mode": "1R1C_forward_euler",
+             "summary": "Proyección térmica académica; no acciona equipos."},
+            {"name": "room_assignment", "mode": "exact_dynamic_programming",
+             "summary": "Minimiza potencia nominal para instancias pequeñas."},
+            {"name": "vision", "mode": "optional_yolo",
+             "summary": "Conteo disponible solo si el extra de visión y sus pesos están configurados."},
+            {"name": "library_desk_state", "mode": "demonstration_rule",
+             "summary": "Recomienda estados de mesa; no libera puestos automáticamente."},
+        ],
+        "limits": {
+            "tracked_spaces": 2_000,
+            "assignment_courses": 18,
+            "vision_image_bytes": 8 * 1024 * 1024,
+            "thermal_horizon_minutes": 120,
+        },
+    }
 
 @app.post("/v1/occupancy/estimate", response_model=OccupancyEstimateOutput)
 def estimate_occupancy(payload: OccupancyInput):

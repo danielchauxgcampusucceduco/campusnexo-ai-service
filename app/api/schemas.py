@@ -89,4 +89,17 @@ class DeskStateOutput(BaseModel):
     note: str
 
 
+class CapabilityFeature(BaseModel):
+    name: str
+    mode: str
+    summary: str
+
+
+class CapabilitiesOutput(BaseModel):
+    service: str
+    api_version: str
+    features: list[CapabilityFeature]
+    limits: dict[str, int]
+
+
 AssignmentInput.model_rebuild()
