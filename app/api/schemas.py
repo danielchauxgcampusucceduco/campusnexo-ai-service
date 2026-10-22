@@ -1,7 +1,7 @@
 """HTTP request contracts for the public API."""
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
@@ -10,7 +10,11 @@ from app.settings import (
 )
 
 
-class OccupancyInput(BaseModel):
+class StrictInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class OccupancyInput(StrictInput):
     space_id: str = Field(min_length=1, max_length=32)
     yolo_people: int | None = Field(default=None, ge=0, le=1000)
     co2_ppm: float = Field(ge=0, le=10000)
@@ -18,7 +22,7 @@ class OccupancyInput(BaseModel):
     outdoor_co2_ppm: float = Field(default=415, ge=300, le=1000)
 
 
-class ThermalInput(BaseModel):
+class ThermalInput(StrictInput):
     current_temp_c: float = Field(ge=-20, le=60)
     outside_temp_c: float = Field(ge=-30, le=60)
     occupancy: int = Field(ge=0, le=1000)
@@ -29,18 +33,18 @@ class ThermalInput(BaseModel):
     horizon_min: int = Field(default=20, ge=1, le=MAX_THERMAL_HORIZON_MINUTES)
 
 
-class AssignmentInput(BaseModel):
+class AssignmentInput(StrictInput):
     courses: list["CourseAssignmentInput"] = Field(max_length=MAX_ASSIGNMENT_COURSES)
     rooms: list["RoomAssignmentInput"]
     safety_margin: float = Field(default=1.10, gt=0, le=2)
 
 
-class CourseAssignmentInput(BaseModel):
+class CourseAssignmentInput(StrictInput):
     course_id: str = Field(min_length=1, max_length=64)
     attendance: int = Field(ge=0, le=1000)
 
 
-class RoomAssignmentInput(BaseModel):
+class RoomAssignmentInput(StrictInput):
     room_id: str = Field(min_length=1, max_length=64)
     capacity: int = Field(ge=0, le=1000)
     power_kw: float = Field(ge=0, le=1000)
