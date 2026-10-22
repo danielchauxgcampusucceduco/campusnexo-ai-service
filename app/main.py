@@ -1,59 +1,18 @@
 from fastapi import FastAPI, HTTPException, Request
-from app.api.schemas import (
-    AssignmentOutput,
-    AssignmentInput,
-    CapabilitiesOutput,
-    DeskStateOutput,
-    OccupancyEstimateOutput,
-    OccupancyInput,
-    ThermalInput,
-    ThermalRecommendationOutput,
-)
+from app.api.routes.health import router as health_router
+from app.api.schemas import AssignmentInput, AssignmentOutput, DeskStateOutput, OccupancyEstimateOutput, OccupancyInput, ThermalInput, ThermalRecommendationOutput
 from app.domain.occupancy import desk_state
 from app.domain.thermal import simulate_free_warming
 from app.domain.assignment import assign_rooms
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
 from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
-from app.settings import (
-    MAX_ASSIGNMENT_COURSES,
-    MAX_THERMAL_HORIZON_MINUTES,
-    MAX_TRACKED_SPACES,
-    MAX_VISION_IMAGE_BYTES,
-)
+from app.settings import MAX_VISION_IMAGE_BYTES
 
 vision = YoloCounter()
 occupancy_filters = OccupancyFilterRegistry()
 
 app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estimación de ocupación por fusión heurística (Kalman escalar, no calibrado), conteo YOLO opcional y utilidades académicas; sin control de actuadores.")
-
-@app.get("/health")
-def health(): return {"status": "ok", "vision": "optional; enabled when the vision extra and weights are available"}
-
-
-@app.get("/v1/capabilities", response_model=CapabilitiesOutput)
-def capabilities():
-    return {
-        "service": "CampusNexo AI Service",
-        "api_version": "v1",
-        "features": [
-            {"name": "occupancy", "mode": "kalman_escalar_pesos_fijos_no_calibrado",
-             "summary": "Estimación con cámara opcional, CO2 y Wi-Fi; confidence_pct no es probabilidad."},
-            {"name": "thermal", "mode": "1R1C_exact_exponential",
-             "summary": "Proyección térmica académica; no acciona equipos."},
-            {"name": "room_assignment", "mode": "exact_dynamic_programming",
-             "summary": "Minimiza potencia nominal para instancias pequeñas."},
-            {"name": "vision", "mode": "optional_yolo",
-             "summary": "Conteo disponible solo si el extra de visión y sus pesos están configurados."},
-            {"name": "library_desk_state", "mode": "demonstration_rule",
-             "summary": "Recomienda estados de mesa; no libera puestos automáticamente."},
-        ],
-        "limits": {
-            "tracked_spaces": MAX_TRACKED_SPACES,
-            "assignment_courses": MAX_ASSIGNMENT_COURSES,
-            "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
-            "thermal_horizon_minutes": MAX_THERMAL_HORIZON_MINUTES,
-        },
-    }
+app.include_router(health_router)
 
 @app.post("/v1/occupancy/estimate", response_model=OccupancyEstimateOutput)
 def estimate_occupancy(payload: OccupancyInput):
