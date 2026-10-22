@@ -115,6 +115,18 @@ def test_assignment_endpoint_rejects_ids_that_collide_after_whitespace_normaliza
     assert response.status_code == 422
 
 
+def test_assignment_endpoint_rejects_room_ids_that_collide_after_normalization():
+    response = client.post("/v1/rooms/assignment", json={
+        "courses": [],
+        "rooms": [
+            {"room_id": " A-301 ", "capacity": 24, "power_kw": 1},
+            {"room_id": "A-301", "capacity": 30, "power_kw": 2},
+        ],
+    })
+
+    assert response.status_code == 422
+
+
 def test_assignment_endpoint_enforces_the_documented_exact_solver_limit():
     response = client.post(
         "/v1/rooms/assignment",
