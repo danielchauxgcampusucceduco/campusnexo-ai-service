@@ -77,3 +77,10 @@ def test_thermal_domain_rejects_non_finite_and_out_of_range_inputs(field, value)
 
     with pytest.raises(ValueError, match=field):
         simulate_free_warming(**(values | {field: value}))
+
+
+@pytest.mark.parametrize(("field", "value"), [("occupancy", True), ("occupancy", 1.5), ("max_minutes", 2.5)])
+def test_thermal_domain_requires_integer_count_and_horizon(field, value):
+    with pytest.raises(ValueError, match=f"{field}.*entero"):
+        simulate_free_warming(**({"current_temp_c": 20, "outside_temp_c": 14, "occupancy": 1,
+                                  "lighting_kw": 1} | {field: value}))

@@ -11,6 +11,9 @@ def simulate_free_warming(current_temp_c: float, outside_temp_c: float, occupanc
                           lighting_kw: float, resistance_c_per_kw: float = 2.4,
                           capacitance_kwh_per_c: float = 1.85,
                           comfort_limit_c: float = 24.5, max_minutes: int = 20) -> dict:
+    for name, value in (("occupancy", occupancy), ("max_minutes", max_minutes)):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(f"{name} debe ser un entero")
     _require_range("current_temp_c", current_temp_c, -20, 60)
     _require_range("outside_temp_c", outside_temp_c, -30, 60)
     _require_range("occupancy", occupancy, 0, 1000)
