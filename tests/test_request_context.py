@@ -31,6 +31,14 @@ def test_middleware_replaces_an_invalid_request_id():
     assert re.fullmatch(r"[a-f0-9]{32}", response.headers["X-Request-ID"])
 
 
+def test_middleware_replaces_request_ids_longer_than_the_log_contract():
+    response = TestClient(create_app()).get("/health", headers={"X-Request-ID": "x" * 65})
+
+    request_id = response.headers["X-Request-ID"]
+    assert len(request_id) == 32
+    assert re.fullmatch(r"[a-f0-9]{32}", request_id)
+
+
 def test_middleware_exposes_the_sanitized_id_to_route_handlers():
     application = FastAPI()
     application.middleware("http")(request_context)
