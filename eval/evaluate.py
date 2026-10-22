@@ -44,6 +44,7 @@ def metrics(errors: list[float]) -> dict:
 
 def evaluate(rows: list[dict], tolerance: float) -> dict:
     filters: dict[str, KalmanOccupancy] = defaultdict(KalmanOccupancy)
+    per_space_errors: dict[str, list[float]] = defaultdict(list)
     all_errors, with_camera, without_camera = [], [], []
     calibration = {bin_: [0, 0] for bin_ in BINS}
     for line, row in enumerate(rows, start=2):
@@ -57,6 +58,7 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
                                                                int(row["wifi_devices"]), outdoor)
         error = estimate - float(row["true_people"])
         all_errors.append(error)
+        per_space_errors[row["space_id"]].append(error)
         (with_camera if yolo_people is not None else without_camera).append(error)
         for low, high in BINS:
             if low <= confidence < high:
@@ -64,6 +66,7 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
                 calibration[(low, high)][1] += abs(error) <= tolerance
     return {
         "overall": metrics(all_errors),
+        "per_space": {space_id: metrics(errors) for space_id, errors in sorted(per_space_errors.items())},
         "with_camera": metrics(with_camera),
         "without_camera": metrics(without_camera),
         "tolerance_people": tolerance,
