@@ -75,6 +75,13 @@ def internal_confidence(variance: float) -> float:
 
 def desk_state(people: int, objects: int, unattended_seconds: int,
                max_unattended_seconds: int = 900) -> str:
+    for name, value in (("people", people), ("objects", objects),
+                        ("unattended_seconds", unattended_seconds),
+                        ("max_unattended_seconds", max_unattended_seconds)):
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ValueError(f"{name} debe ser un entero no negativo")
+    if max_unattended_seconds == 0:
+        raise ValueError("max_unattended_seconds debe ser positivo")
     if people > 0:
         return "OCCUPIED_VERIFIED"
     if objects > 0 and unattended_seconds < max_unattended_seconds:

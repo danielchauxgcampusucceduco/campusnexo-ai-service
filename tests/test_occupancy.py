@@ -56,6 +56,14 @@ def test_desk_rules():
     assert desk_state(0, 0, 0) == "AVAILABLE"
 
 
+def test_desk_domain_rejects_negative_and_boolean_counts():
+    import pytest
+
+    for values in ((-1, 0, 0), (0, True, 0), (0, 1, -1), (0, 1, 0, 0)):
+        with pytest.raises(ValueError):
+            desk_state(*values)
+
+
 def test_api_says_what_the_estimate_is():
     client = TestClient(app)
     response = client.post("/v1/occupancy/estimate", json={"space_id": "421-A", "yolo_people": 10,
