@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from threading import get_ident
 
 from app.main import app
+from app.infrastructure.vision import VisionUnavailable
 
 
 client = TestClient(app)
@@ -61,6 +62,19 @@ def test_vision_route_maps_decode_failure_to_bad_request(monkeypatch):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "No se pudo decodificar la imagen"
+
+
+def test_vision_route_maps_unavailable_model_to_service_unavailable(monkeypatch):
+    def unavailable(_raw):
+        raise VisionUnavailable("YOLO no disponible")
+
+    monkeypatch.setattr(app.state.vision_counter, "count_people", unavailable)
+    response = client.post(
+        "/v1/vision/count", content=b"image", headers={"Content-Type": "image/jpeg"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "YOLO no disponible"
 
 
 def test_vision_route_returns_count_metadata_without_echoing_image(monkeypatch):
