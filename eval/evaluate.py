@@ -124,7 +124,14 @@ def read_rows(handle) -> list[dict]:
     missing = [column for column in REQUIRED if column not in headers]
     if missing:
         raise ValueError(f"faltan columnas requeridas: {', '.join(missing)}")
-    return list(reader)
+    rows = []
+    for line, row in enumerate(reader, start=2):
+        if None in row:
+            raise ValueError(f"fila {line}: hay más valores que encabezados")
+        if any(value is None for value in row.values()):
+            raise ValueError(f"fila {line}: hay menos valores que encabezados")
+        rows.append(row)
+    return rows
 
 
 def main() -> None:

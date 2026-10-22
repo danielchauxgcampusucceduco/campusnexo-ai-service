@@ -125,3 +125,14 @@ def test_csv_reader_reports_missing_required_columns_at_the_header():
 
     with pytest.raises(ValueError, match="faltan columnas requeridas: wifi_devices"):
         read_rows(io.StringIO("space_id,co2_ppm,true_people\nA-301,500,5\n"))
+
+
+@pytest.mark.parametrize(
+    ("row", "message"),
+    [("A-301,500,4,5,extra", "más valores"), ("A-301,500,4", "menos valores")],
+)
+def test_csv_reader_rejects_rows_with_inconsistent_column_counts(row, message):
+    import io
+
+    with pytest.raises(ValueError, match=message):
+        read_rows(io.StringIO(f"space_id,co2_ppm,wifi_devices,true_people\n{row}\n"))
