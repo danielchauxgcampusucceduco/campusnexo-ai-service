@@ -42,3 +42,14 @@ def test_readiness_fails_when_a_required_adapter_is_missing():
 
     assert response.status_code == 503
     assert response.json()["detail"]["missing"] == ["occupancy_registry"]
+
+
+def test_readiness_reports_all_missing_runtime_adapters_in_stable_order():
+    application = create_app()
+    application.state.occupancy_registry = None
+    application.state.vision_counter = None
+
+    response = TestClient(application).get("/ready")
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["missing"] == ["occupancy_registry", "vision_counter"]
