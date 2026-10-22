@@ -1,7 +1,7 @@
 """HTTP request contracts for the public API."""
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
@@ -21,6 +21,14 @@ class OccupancyInput(StrictInput):
     co2_ppm: float = Field(ge=0, le=10000)
     wifi_devices: int = Field(ge=0, le=10000)
     outdoor_co2_ppm: float = Field(default=415, ge=300, le=1000)
+
+    @field_validator("space_id")
+    @classmethod
+    def normalize_space_id(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("space_id no puede estar vacío")
+        return normalized
 
 
 class OccupancyBatchInput(StrictInput):
@@ -65,11 +73,27 @@ class CourseAssignmentInput(StrictInput):
     course_id: str = Field(min_length=1, max_length=64)
     attendance: int = Field(ge=0, le=1000)
 
+    @field_validator("course_id")
+    @classmethod
+    def normalize_course_id(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("course_id no puede estar vacío")
+        return normalized
+
 
 class RoomAssignmentInput(StrictInput):
     room_id: str = Field(min_length=1, max_length=64)
     capacity: int = Field(ge=1, le=1000)
     power_kw: float = Field(ge=0, le=1000)
+
+    @field_validator("room_id")
+    @classmethod
+    def normalize_room_id(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("room_id no puede estar vacío")
+        return normalized
 
 
 class AssignmentRecordOutput(BaseModel):

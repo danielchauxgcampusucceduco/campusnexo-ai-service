@@ -75,6 +75,20 @@ def test_vision_without_the_extra_answers_503_not_a_fake_count():
     assert response.status_code in (400, 503)
 
 
+def test_occupancy_api_rejects_blank_space_id_and_trims_valid_identifiers():
+    client = TestClient(app)
+    blank = client.post("/v1/occupancy/estimate", json={
+        "space_id": "   ", "co2_ppm": 600, "wifi_devices": 5,
+    })
+    trimmed = client.post("/v1/occupancy/estimate", json={
+        "space_id": " A-301 ", "co2_ppm": 600, "wifi_devices": 5,
+    })
+
+    assert blank.status_code == 422
+    assert trimmed.status_code == 200
+    assert trimmed.json()["space_id"] == "A-301"
+
+
 def test_evaluation_reports_error_metrics_from_the_given_rows():
     rows = [{"space_id": "A", "yolo_people": "5", "co2_ppm": "500", "wifi_devices": "5", "outdoor_co2_ppm": "415",
              "true_people": "5"} for _ in range(10)]
