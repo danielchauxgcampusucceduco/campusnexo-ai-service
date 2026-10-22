@@ -38,6 +38,23 @@ def test_registry_requires_a_positive_capacity():
         OccupancyFilterRegistry(max_spaces=0)
 
 
+@pytest.mark.parametrize("capacity", [True, 1.5, "3"])
+def test_registry_rejects_non_integer_capacity(capacity):
+    with pytest.raises(ValueError, match="debe ser positivo"):
+        OccupancyFilterRegistry(max_spaces=capacity)
+
+
+def test_registry_trims_space_identifiers_and_rejects_blank_values():
+    registry = OccupancyFilterRegistry(max_spaces=2)
+    control = OccupancyFilterRegistry(max_spaces=2)
+
+    update(registry, "A", 10)
+    update(control, "A", 10)
+    assert update(registry, " A ", 0) == update(control, "A", 0)
+    with pytest.raises(ValueError, match="space_id"):
+        update(registry, "   ", 10)
+
+
 def test_invalid_new_space_measurement_does_not_evict_a_valid_filter():
     registry = OccupancyFilterRegistry(max_spaces=1)
     control = OccupancyFilterRegistry(max_spaces=1)
