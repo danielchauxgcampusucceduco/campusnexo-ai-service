@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
+    MAX_ASSIGNMENT_ROOMS,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MIN_THERMAL_PARAMETER,
@@ -55,7 +56,7 @@ class ThermalInput(StrictInput):
 
 class AssignmentInput(StrictInput):
     courses: list["CourseAssignmentInput"] = Field(max_length=MAX_ASSIGNMENT_COURSES)
-    rooms: list["RoomAssignmentInput"]
+    rooms: list["RoomAssignmentInput"] = Field(max_length=MAX_ASSIGNMENT_ROOMS)
     safety_margin: float = Field(default=1.10, gt=0, le=2)
 
     @model_validator(mode="after")

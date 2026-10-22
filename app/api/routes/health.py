@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app.api.schemas import CapabilitiesOutput
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
+    MAX_ASSIGNMENT_ROOMS,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MAX_TRACKED_SPACES,
@@ -50,6 +51,7 @@ def capabilities():
             "tracked_spaces": MAX_TRACKED_SPACES,
             "occupancy_batch_items": MAX_OCCUPANCY_BATCH_ITEMS,
             "assignment_courses": MAX_ASSIGNMENT_COURSES,
+            "assignment_rooms": MAX_ASSIGNMENT_ROOMS,
             "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
             "thermal_horizon_minutes": MAX_THERMAL_HORIZON_MINUTES,
         },

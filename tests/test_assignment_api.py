@@ -89,3 +89,15 @@ def test_assignment_endpoint_enforces_the_documented_exact_solver_limit():
     )
 
     assert response.status_code == 422
+
+
+def test_assignment_endpoint_caps_room_catalog_size():
+    response = client.post(
+        "/v1/rooms/assignment",
+        json={
+            "courses": [],
+            "rooms": [{"room_id": f"R{index}", "capacity": 1, "power_kw": 1} for index in range(1_001)],
+        },
+    )
+
+    assert response.status_code == 422

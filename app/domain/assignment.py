@@ -1,7 +1,7 @@
 """Asignación óptima exacta mediante matching rectangular de coste mínimo."""
 import math
 
-from app.settings import MAX_ASSIGNMENT_COURSES
+from app.settings import MAX_ASSIGNMENT_COURSES, MAX_ASSIGNMENT_ROOMS
 
 
 def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 1.10) -> dict:
@@ -10,6 +10,8 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
             f"La demo exacta admite hasta {MAX_ASSIGNMENT_COURSES} cursos; "
             "use un solver MILP para instancias mayores"
         )
+    if len(rooms) > MAX_ASSIGNMENT_ROOMS:
+        raise ValueError(f"La demo admite hasta {MAX_ASSIGNMENT_ROOMS} salones")
     if not 0 < safety_margin <= 2:
         raise ValueError("safety_margin fuera de rango")
     course_ids: set[str] = set()
