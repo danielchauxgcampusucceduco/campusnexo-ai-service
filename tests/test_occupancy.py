@@ -25,6 +25,12 @@ def test_confidence_is_bounded_and_only_reflects_variance():
     assert internal_confidence(10) == 0.0
 
 
+def test_confidence_saturates_for_variance_outside_its_reporting_scale():
+    assert internal_confidence(5) == 0.0
+    assert internal_confidence(100) == 0.0
+    assert internal_confidence(-1) == 100.0
+
+
 def test_desk_rules():
     assert desk_state(1, 3, 2000) == "OCCUPIED_VERIFIED"
     assert desk_state(0, 1, 60) == "POSSIBLE_ABANDONMENT"
