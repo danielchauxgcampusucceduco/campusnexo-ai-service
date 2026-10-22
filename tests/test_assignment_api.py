@@ -61,6 +61,21 @@ def test_assignment_endpoint_rejects_boolean_attendance_and_capacity():
     assert response.status_code == 422
 
 
+def test_assignment_endpoint_rejects_boolean_cost_and_safety_margin():
+    base = {
+        "courses": [{"course_id": "IS-101", "attendance": 10}],
+        "rooms": [{"room_id": "A-301", "capacity": 20, "power_kw": True}],
+    }
+    boolean_cost = client.post("/v1/rooms/assignment", json=base)
+    boolean_margin = client.post("/v1/rooms/assignment", json={
+        **(base | {"rooms": [{"room_id": "A-301", "capacity": 20, "power_kw": 1}]}),
+        "safety_margin": True,
+    })
+
+    assert boolean_cost.status_code == 422
+    assert boolean_margin.status_code == 422
+
+
 def test_assignment_endpoint_rejects_zero_capacity_before_utilization_division():
     response = client.post(
         "/v1/rooms/assignment",
