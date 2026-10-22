@@ -1,10 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request
 from app.api.routes.assignment import router as assignment_router
 from app.api.routes.health import router as health_router
+from app.api.routes.library import router as library_router
 from app.api.routes.occupancy import router as occupancy_router
 from app.api.routes.thermal import router as thermal_router
-from app.api.schemas import DeskStateOutput
-from app.domain.occupancy import desk_state
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
 from app.settings import MAX_VISION_IMAGE_BYTES
 
@@ -15,6 +14,7 @@ app.include_router(health_router)
 app.include_router(occupancy_router)
 app.include_router(thermal_router)
 app.include_router(assignment_router)
+app.include_router(library_router)
 
 @app.post("/v1/vision/count")
 async def count_people(request: Request):
@@ -41,8 +41,3 @@ async def count_people(request: Request):
         chunks.clear()
         del raw
 
-@app.get("/v1/library/desk-state", response_model=DeskStateOutput)
-def library_desk_state(people: int = 0, objects: int = 0, unattended_seconds: int = 0):
-    if min(people, objects, unattended_seconds) < 0: raise HTTPException(422, "Los parámetros no pueden ser negativos")
-    return {"state": desk_state(people, objects, unattended_seconds), "is_automatic_release": False,
-            "note": "Regla de demostración; validar política institucional y evitar penalizar falsos positivos."}
