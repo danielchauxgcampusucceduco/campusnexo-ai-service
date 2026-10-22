@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
+    MAX_ASSIGNMENT_ATTENDANCE,
+    MAX_ROOM_CAPACITY,
+    MAX_ROOM_POWER_KW,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MIN_THERMAL_PARAMETER,
@@ -72,7 +75,7 @@ class AssignmentInput(StrictInput):
 
 class CourseAssignmentInput(StrictInput):
     course_id: str = Field(min_length=1, max_length=64)
-    attendance: int = Field(ge=0, le=1000, strict=True)
+    attendance: int = Field(ge=0, le=MAX_ASSIGNMENT_ATTENDANCE, strict=True)
 
     @field_validator("course_id")
     @classmethod
@@ -85,8 +88,8 @@ class CourseAssignmentInput(StrictInput):
 
 class RoomAssignmentInput(StrictInput):
     room_id: str = Field(min_length=1, max_length=64)
-    capacity: int = Field(ge=1, le=1000, strict=True)
-    power_kw: float = Field(ge=0, le=1000, strict=True)
+    capacity: int = Field(ge=1, le=MAX_ROOM_CAPACITY, strict=True)
+    power_kw: float = Field(ge=0, le=MAX_ROOM_POWER_KW, strict=True)
 
     @field_validator("room_id")
     @classmethod

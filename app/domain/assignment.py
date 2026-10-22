@@ -1,7 +1,13 @@
 """Asignación óptima exacta mediante matching rectangular de coste mínimo."""
 import math
 
-from app.settings import MAX_ASSIGNMENT_COURSES, MAX_ASSIGNMENT_ROOMS
+from app.settings import (
+    MAX_ASSIGNMENT_ATTENDANCE,
+    MAX_ASSIGNMENT_COURSES,
+    MAX_ASSIGNMENT_ROOMS,
+    MAX_ROOM_CAPACITY,
+    MAX_ROOM_POWER_KW,
+)
 
 
 def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 1.10) -> dict:
@@ -24,7 +30,8 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
         attendance = course.get("attendance")
         if not isinstance(course_id, str) or not course_id.strip() or course_id.strip() in course_ids:
             raise ValueError("course_id debe ser único y no vacío")
-        if isinstance(attendance, bool) or not isinstance(attendance, int) or attendance < 0:
+        if isinstance(attendance, bool) or not isinstance(attendance, int) \
+                or not 0 <= attendance <= MAX_ASSIGNMENT_ATTENDANCE:
             raise ValueError(f"attendance inválido para {course_id}")
         course_id = course_id.strip()
         course_ids.add(course_id)
@@ -39,9 +46,10 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
         power = room.get("power_kw")
         if not isinstance(room_id, str) or not room_id.strip() or room_id.strip() in room_ids:
             raise ValueError("room_id debe ser único y no vacío")
-        if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < 1:
+        if isinstance(capacity, bool) or not isinstance(capacity, int) or not 1 <= capacity <= MAX_ROOM_CAPACITY:
             raise ValueError(f"capacity inválida para {room_id}")
-        if isinstance(power, bool) or not isinstance(power, (int, float)) or not math.isfinite(power) or power < 0:
+        if isinstance(power, bool) or not isinstance(power, (int, float)) or not math.isfinite(power) \
+                or not 0 <= power <= MAX_ROOM_POWER_KW:
             raise ValueError(f"power_kw inválida para {room_id}")
         room_id = room_id.strip()
         room_ids.add(room_id)

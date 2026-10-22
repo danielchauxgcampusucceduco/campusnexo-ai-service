@@ -156,8 +156,11 @@ def test_assignment_rejects_invalid_safety_margin(margin):
     [
         ([{"course_id": "A", "attendance": -1}], [], "attendance"),
         ([{"course_id": "A", "attendance": True}], [], "attendance"),
+        ([{"course_id": "A", "attendance": 1001}], [], "attendance"),
         ([], [{"room_id": "R", "capacity": 0, "power_kw": 1}], "capacity"),
+        ([], [{"room_id": "R", "capacity": 1001, "power_kw": 1}], "capacity"),
         ([], [{"room_id": "R", "capacity": 10, "power_kw": -1}], "power_kw"),
+        ([], [{"room_id": "R", "capacity": 10, "power_kw": 1001}], "power_kw"),
         ([], [{"room_id": "R", "capacity": 10, "power_kw": float("inf")}], "power_kw"),
         ([{"course_id": "A", "attendance": 1}, {"course_id": "A", "attendance": 2}], [], "course_id"),
         ([], [{"room_id": "R", "capacity": 10, "power_kw": 1},
