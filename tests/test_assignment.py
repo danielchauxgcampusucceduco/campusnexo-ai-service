@@ -102,6 +102,21 @@ def test_equal_power_solutions_keep_the_input_room_order_deterministically():
     assert rooms[0]["room_id"] == "R-SECOND"
 
 
+def test_equal_cost_matching_remains_deterministic_across_repeated_runs():
+    courses = [{"course_id": "A", "attendance": 5}, {"course_id": "B", "attendance": 5}]
+    rooms = [
+        {"room_id": "R1", "capacity": 10, "power_kw": 1},
+        {"room_id": "R2", "capacity": 10, "power_kw": 1},
+        {"room_id": "R3", "capacity": 10, "power_kw": 1},
+    ]
+
+    first = assign_rooms(courses, rooms, safety_margin=1)
+    second = assign_rooms(courses, rooms, safety_margin=1)
+
+    assert first == second
+    assert [row["room_id"] for row in first["assignments"]] == ["R1", "R2"]
+
+
 def test_empty_course_set_is_a_feasible_zero_power_plan():
     result = assign_rooms([], [{"room_id": "A-301", "capacity": 24, "power_kw": 1.8}])
 
