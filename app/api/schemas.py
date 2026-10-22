@@ -1,7 +1,7 @@
 """HTTP request contracts for the public API."""
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
@@ -38,6 +38,16 @@ class AssignmentInput(StrictInput):
     rooms: list["RoomAssignmentInput"]
     safety_margin: float = Field(default=1.10, gt=0, le=2)
 
+    @model_validator(mode="after")
+    def unique_identifiers(self):
+        course_ids = [course.course_id for course in self.courses]
+        room_ids = [room.room_id for room in self.rooms]
+        if len(course_ids) != len(set(course_ids)):
+            raise ValueError("course_id debe ser único dentro de courses")
+        if len(room_ids) != len(set(room_ids)):
+            raise ValueError("room_id debe ser único dentro de rooms")
+        return self
+
 
 class CourseAssignmentInput(StrictInput):
     course_id: str = Field(min_length=1, max_length=64)
@@ -46,7 +56,7 @@ class CourseAssignmentInput(StrictInput):
 
 class RoomAssignmentInput(StrictInput):
     room_id: str = Field(min_length=1, max_length=64)
-    capacity: int = Field(ge=0, le=1000)
+    capacity: int = Field(ge=1, le=1000)
     power_kw: float = Field(ge=0, le=1000)
 
 

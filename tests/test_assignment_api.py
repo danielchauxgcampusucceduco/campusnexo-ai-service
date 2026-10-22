@@ -52,6 +52,33 @@ def test_assignment_endpoint_rejects_invalid_course_and_room_fields():
     assert response.status_code == 422
 
 
+def test_assignment_endpoint_rejects_zero_capacity_before_utilization_division():
+    response = client.post(
+        "/v1/rooms/assignment",
+        json={
+            "courses": [{"course_id": "IS-101", "attendance": 0}],
+            "rooms": [{"room_id": "A-301", "capacity": 0, "power_kw": 1.0}],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_assignment_endpoint_rejects_ambiguous_duplicate_ids():
+    response = client.post(
+        "/v1/rooms/assignment",
+        json={
+            "courses": [{"course_id": "IS-101", "attendance": 10}],
+            "rooms": [
+                {"room_id": "A-301", "capacity": 24, "power_kw": 1.0},
+                {"room_id": "A-301", "capacity": 30, "power_kw": 1.2},
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_assignment_endpoint_enforces_the_documented_exact_solver_limit():
     response = client.post(
         "/v1/rooms/assignment",
