@@ -1,4 +1,5 @@
 import pytest
+from itertools import permutations
 
 from app.domain.assignment import assign_rooms
 
@@ -46,6 +47,34 @@ def test_assignment_scales_to_many_rooms_without_enumerating_room_subsets():
     assert result["feasible"] is True
     assert len({row["room_id"] for row in result["assignments"]}) == 18
     assert result["total_nominal_power_kw"] == sum(range(1, 19))
+
+
+def test_rectangular_matcher_matches_exhaustive_optimum_for_small_catalogs():
+    cases = [
+        ([{"course_id": "A", "attendance": 8}, {"course_id": "B", "attendance": 15}],
+         [{"room_id": "R1", "capacity": 10, "power_kw": 1.1},
+          {"room_id": "R2", "capacity": 18, "power_kw": 1.7},
+          {"room_id": "R3", "capacity": 25, "power_kw": 2.5}]),
+        ([{"course_id": "A", "attendance": 20}, {"course_id": "B", "attendance": 3},
+          {"course_id": "C", "attendance": 11}],
+         [{"room_id": "R1", "capacity": 12, "power_kw": 1},
+          {"room_id": "R2", "capacity": 22, "power_kw": 2},
+          {"room_id": "R3", "capacity": 40, "power_kw": 4},
+          {"room_id": "R4", "capacity": 15, "power_kw": 1.4}]),
+    ]
+
+    for courses, rooms in cases:
+        costs = [
+            sum(float(rooms[room_index]["power_kw"]) for room_index in room_indexes)
+            for room_indexes in permutations(range(len(rooms)), len(courses))
+            if all(rooms[room_index]["capacity"] >= course["attendance"] * 1.1
+                   for course, room_index in zip(courses, room_indexes))
+        ]
+        result = assign_rooms(courses, rooms)
+
+        assert result["feasible"] is bool(costs)
+        if costs:
+            assert result["total_nominal_power_kw"] == round(min(costs), 3)
 
 
 def test_assignment_reports_infeasible_capacity_and_room_count():
