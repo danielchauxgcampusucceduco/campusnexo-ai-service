@@ -47,9 +47,11 @@ class KalmanOccupancy:
             raise ValueError("yolo_count debe ser un entero entre 0 y 1000 o None")
         if isinstance(wifi_devices, bool) or not isinstance(wifi_devices, int) or not 0 <= wifi_devices <= 10000:
             raise ValueError("wifi_devices debe ser un entero entre 0 y 10000")
-        if not math.isfinite(co2_ppm) or not 0 <= co2_ppm <= 10000:
+        if isinstance(co2_ppm, bool) or not isinstance(co2_ppm, (int, float)) \
+                or not math.isfinite(co2_ppm) or not 0 <= co2_ppm <= 10000:
             raise ValueError("co2_ppm debe estar entre 0 y 10000")
-        if not math.isfinite(outdoor_co2_ppm) or not 300 <= outdoor_co2_ppm <= 1000:
+        if isinstance(outdoor_co2_ppm, bool) or not isinstance(outdoor_co2_ppm, (int, float)) \
+                or not math.isfinite(outdoor_co2_ppm) or not 300 <= outdoor_co2_ppm <= 1000:
             raise ValueError("outdoor_co2_ppm debe estar entre 300 y 1000")
         co2_estimate = max(0.0, (co2_ppm - outdoor_co2_ppm) / CO2_PPM_PER_PERSON)
         wifi_estimate = max(0, wifi_devices) * PEOPLE_PER_WIFI_DEVICE

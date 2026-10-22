@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import pytest
 
 from app.domain.occupancy import KalmanOccupancy, desk_state, internal_confidence
 from app.main import app
@@ -39,6 +40,14 @@ def test_filter_rejects_sensor_values_outside_the_public_api_contract():
         kalman.update(None, 10001, 1)
     with pytest.raises(ValueError, match="outdoor_co2_ppm"):
         kalman.update(None, 500, 1, 1001)
+
+
+@pytest.mark.parametrize("co2, outdoor", [(True, 415), (500, False), ("500", 415), (500, "415")])
+def test_filter_rejects_boolean_and_non_numeric_carbon_dioxide_values(co2, outdoor):
+    kalman = KalmanOccupancy()
+
+    with pytest.raises(ValueError, match="co2_ppm"):
+        kalman.update(None, co2, 1, outdoor)
 
 
 def test_filter_rejects_invalid_initial_covariance():
