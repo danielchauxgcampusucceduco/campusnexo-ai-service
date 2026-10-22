@@ -32,7 +32,7 @@ class KalmanOccupancy:
     def __post_init__(self) -> None:
         for name in ("process_variance", "measurement_variance", "estimate", "variance"):
             value = getattr(self, name)
-            if not math.isfinite(value):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
                 raise ValueError(f"{name} debe ser finito")
         if self.process_variance < 0 or self.measurement_variance <= 0 or self.variance < 0:
             raise ValueError("Las varianzas deben ser no negativas y la varianza de medición positiva")

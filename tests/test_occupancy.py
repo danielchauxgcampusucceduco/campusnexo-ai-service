@@ -57,6 +57,13 @@ def test_filter_rejects_invalid_initial_covariance():
         KalmanOccupancy(measurement_variance=0)
 
 
+@pytest.mark.parametrize("field", ["process_variance", "measurement_variance", "estimate", "variance"])
+def test_filter_rejects_non_numeric_or_boolean_initial_state(field):
+    for value in (True, "1"):
+        with pytest.raises(ValueError, match=f"{field} debe ser finito"):
+            KalmanOccupancy(**{field: value})
+
+
 def test_confidence_is_bounded_and_only_reflects_variance():
     assert internal_confidence(0) == 100.0
     assert internal_confidence(10) == 0.0
