@@ -66,3 +66,18 @@ def test_assignment_rejects_instances_above_exact_solver_limit(course_count):
 def test_assignment_rejects_invalid_safety_margin(margin):
     with pytest.raises(ValueError, match="fuera de rango"):
         assign_rooms([], [], margin)
+
+
+@pytest.mark.parametrize(
+    ("courses", "rooms", "message"),
+    [
+        ([{"course_id": "A", "attendance": -1}], [], "attendance"),
+        ([{"course_id": "A", "attendance": True}], [], "attendance"),
+        ([], [{"room_id": "R", "capacity": 0, "power_kw": 1}], "capacity"),
+        ([], [{"room_id": "R", "capacity": 10, "power_kw": float("inf")}], "power_kw"),
+        ([{"course_id": "A", "attendance": 1}, {"course_id": "A", "attendance": 2}], [], "course_id"),
+    ],
+)
+def test_assignment_rejects_invalid_domain_records(courses, rooms, message):
+    with pytest.raises(ValueError, match=message):
+        assign_rooms(courses, rooms)
