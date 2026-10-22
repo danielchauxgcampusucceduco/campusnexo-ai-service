@@ -38,6 +38,15 @@ def test_evaluation_reports_error_metrics_by_space_in_stable_key_order():
     assert result["per_space"]["B-201"]["n"] == 1
 
 
+def test_evaluation_computes_expected_mae_rmse_and_signed_bias():
+    result = evaluate([
+        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "1", "yolo_people": "4"},
+        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "4", "yolo_people": "1"},
+    ], tolerance=2)
+
+    assert result["overall"] == {"n": 2, "mae": 1.5, "rmse": 1.581, "bias": -0.5}
+
+
 @pytest.mark.parametrize("tolerance", [-1, float("nan"), float("inf")])
 def test_evaluation_rejects_invalid_error_tolerances(tolerance):
     with pytest.raises(ValueError, match="tolerance debe ser"):
