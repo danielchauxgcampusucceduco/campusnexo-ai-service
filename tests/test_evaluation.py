@@ -13,21 +13,21 @@ def test_evaluation_reports_error_metrics_by_space_in_stable_key_order():
                 "wifi_devices": "3",
                 "true_people": "4",
                 "yolo_people": "4",
-            },
+             "area_sqm": "48", "capacity": "36"},
             {
                 "space_id": "A-301",
                 "co2_ppm": "600",
                 "wifi_devices": "5",
                 "true_people": "6",
                 "yolo_people": "6",
-            },
+             "area_sqm": "48", "capacity": "36"},
             {
                 "space_id": "A-301",
                 "co2_ppm": "610",
                 "wifi_devices": "5",
                 "true_people": "6",
                 "yolo_people": "6",
-            },
+             "area_sqm": "48", "capacity": "36"},
         ],
         tolerance=1,
     )
@@ -40,11 +40,12 @@ def test_evaluation_reports_error_metrics_by_space_in_stable_key_order():
 
 def test_evaluation_computes_expected_mae_rmse_and_signed_bias():
     result = evaluate([
-        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "1", "yolo_people": "4"},
-        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "4", "yolo_people": "1"},
+        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "1", "yolo_people": "4", "area_sqm": "48", "capacity": "36"},
+        {"space_id": "A", "co2_ppm": "500", "wifi_devices": "1", "true_people": "4", "yolo_people": "1", "area_sqm": "48", "capacity": "36"},
     ], tolerance=2)
 
-    assert result["overall"] == {"n": 2, "mae": 1.5, "rmse": 1.581, "bias": -0.5}
+    # Stateless fusion: the camera dominates each row (estimates 4 and 1), errors +3 and −3.
+    assert result["overall"] == {"n": 2, "mae": 3.0, "rmse": 3.0, "bias": 0.0}
 
 
 @pytest.mark.parametrize("tolerance", [-1, float("nan"), float("inf")])
@@ -62,6 +63,8 @@ def test_evaluation_rejects_invalid_error_tolerances(tolerance):
         ("true_people", "-1"),
         ("yolo_people", "1001"),
         ("outdoor_co2_ppm", "1200"),
+        ("area_sqm", "0"),
+        ("capacity", "0"),
     ],
 )
 def test_evaluation_rejects_invalid_measurement_rows(column, value):
@@ -70,6 +73,8 @@ def test_evaluation_rejects_invalid_measurement_rows(column, value):
         "co2_ppm": "500",
         "wifi_devices": "4",
         "true_people": "5",
+        "area_sqm": "48",
+        "capacity": "36",
     }
     row[column] = value
 
@@ -91,7 +96,7 @@ def test_cli_writes_the_same_per_space_report_to_stdout_and_json(tmp_path, monke
     input_path = tmp_path / "conteos.csv"
     output_path = tmp_path / "resultado.json"
     input_path.write_text(
-        "space_id,co2_ppm,wifi_devices,true_people,yolo_people\nA-301,500,4,5,5\n",
+        "space_id,co2_ppm,wifi_devices,true_people,yolo_people,area_sqm,capacity\nA-301,500,4,5,5,48,36\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(
@@ -110,7 +115,7 @@ def test_cli_writes_the_same_per_space_report_to_stdout_and_json(tmp_path, monke
 def test_cli_reports_invalid_csv_rows_without_a_traceback(tmp_path, monkeypatch, capsys):
     input_path = tmp_path / "conteos.csv"
     input_path.write_text(
-        "space_id,co2_ppm,wifi_devices,true_people\nA-301,nan,4,5\n",
+        "space_id,co2_ppm,wifi_devices,true_people,area_sqm,capacity\nA-301,nan,4,5,48,36\n",
         encoding="utf-8",
     )
     monkeypatch.setattr("sys.argv", ["evaluate.py", str(input_path)])
@@ -125,7 +130,7 @@ def test_cli_reports_invalid_csv_rows_without_a_traceback(tmp_path, monkeypatch,
 def test_cli_reports_json_output_failures_as_argument_errors(tmp_path, monkeypatch, capsys):
     input_path = tmp_path / "conteos.csv"
     input_path.write_text(
-        "space_id,co2_ppm,wifi_devices,true_people\nA-301,500,4,5\n",
+        "space_id,co2_ppm,wifi_devices,true_people,area_sqm,capacity\nA-301,500,4,5,48,36\n",
         encoding="utf-8",
     )
     output_directory = tmp_path / "resultado.json"
@@ -155,10 +160,10 @@ def test_csv_reader_reports_missing_required_columns_at_the_header():
 
 @pytest.mark.parametrize(
     ("row", "message"),
-    [("A-301,500,4,5,extra", "más valores"), ("A-301,500,4", "menos valores")],
+    [("A-301,500,4,5,48,36,extra", "más valores"), ("A-301,500,4,5,48", "menos valores")],
 )
 def test_csv_reader_rejects_rows_with_inconsistent_column_counts(row, message):
     import io
 
     with pytest.raises(ValueError, match=message):
-        read_rows(io.StringIO(f"space_id,co2_ppm,wifi_devices,true_people\n{row}\n"))
+        read_rows(io.StringIO(f"space_id,co2_ppm,wifi_devices,true_people,area_sqm,capacity\n{row}\n"))

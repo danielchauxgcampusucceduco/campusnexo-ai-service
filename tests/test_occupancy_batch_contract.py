@@ -6,7 +6,7 @@ from app.settings import MAX_OCCUPANCY_BATCH_ITEMS
 
 
 def reading(space_id: str) -> dict:
-    return {"space_id": space_id, "co2_ppm": 600, "wifi_devices": 10}
+    return {"space_id": space_id, "co2_ppm": 600, "wifi_devices": 10, "area_sqm": 48, "capacity": 36}
 
 
 def test_batch_contract_requires_unique_spaces_and_non_empty_input():

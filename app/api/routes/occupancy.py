@@ -1,45 +1,47 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException
 
-from app.api.dependencies import get_occupancy_registry
 from app.api.schemas import (
     OccupancyBatchInput,
     OccupancyBatchOutput,
     OccupancyEstimateOutput,
     OccupancyInput,
 )
-from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
+from app.domain.occupancy import fuse_occupancy
 
 router = APIRouter(prefix="/v1/occupancy", tags=["occupancy"])
 
+METHOD = "fusion_varianza_inversa_no_calibrada"
+CONFIDENCE_MEANING = "1 − σ/capacidad: margen de error relativo al tamaño del salón, no probabilidad de acierto"
+NOTE = ("Mismo modelo de fusión que el gemelo digital, con parámetros ilustrativos: no es un modelo entrenado. "
+        "Medir el error con eval/evaluate.py antes de presentar precisión.")
+
 
 @router.post("/estimate", response_model=OccupancyEstimateOutput)
-def estimate_occupancy(
-    payload: OccupancyInput,
-    occupancy_filters: OccupancyFilterRegistry = Depends(get_occupancy_registry),
-):
-    return _estimate(payload, occupancy_filters)
+def estimate_occupancy(payload: OccupancyInput):
+    return _estimate(payload)
 
 
 @router.post("/estimate/batch", response_model=OccupancyBatchOutput)
-def estimate_occupancy_batch(
-    payload: OccupancyBatchInput,
-    occupancy_filters: OccupancyFilterRegistry = Depends(get_occupancy_registry),
-):
-    return {"estimates": [_estimate(item, occupancy_filters) for item in payload.measurements]}
+def estimate_occupancy_batch(payload: OccupancyBatchInput):
+    return {"estimates": [_estimate(item) for item in payload.measurements]}
 
 
-def _estimate(payload: OccupancyInput, occupancy_filters: OccupancyFilterRegistry) -> dict:
-    estimate, confidence = occupancy_filters.estimate(
-        payload.space_id, payload.yolo_people, payload.co2_ppm, payload.wifi_devices, payload.outdoor_co2_ppm
-    )
+def _estimate(payload: OccupancyInput) -> dict:
+    try:
+        fusion = fuse_occupancy(payload.yolo_people, payload.co2_ppm, payload.wifi_devices, payload.area_sqm,
+                                payload.outdoor_co2_ppm)
+    except ValueError as invalid:
+        raise HTTPException(status_code=422, detail=str(invalid)) from invalid
     return {
         "space_id": payload.space_id,
-        "occupancy_estimate": estimate,
-        "confidence_pct": confidence,
-        "confidence_meaning": "estabilidad interna del filtro (varianza), no probabilidad de acierto",
-        "method": "kalman_escalar_pesos_fijos_no_calibrado",
+        "occupancy_estimate": min(fusion.people(), payload.capacity * 3),
+        "confidence_pct": fusion.confidence_pct(payload.capacity),
+        "sigma_people": round(fusion.sigma, 3),
+        "confidence_meaning": CONFIDENCE_MEANING,
+        "method": METHOD,
         "camera_available": payload.yolo_people is not None,
         "is_estimate": True,
-        "note": "Heurística con coeficientes iniciales de demostración: no es un modelo entrenado. "
-                "Medir el error con eval/evaluate.py antes de presentar precisión. El estado se reinicia al reiniciar el proceso.",
+        "sources": [{"source": s.source, "people": s.people, "variance": s.variance, "weight": s.weight}
+                    for s in fusion.sources],
+        "note": NOTE,
     }

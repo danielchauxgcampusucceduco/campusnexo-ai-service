@@ -1,80 +1,107 @@
-"""Estimación ligera de ocupación por fusión de señales.
+"""Estimación de ocupación por fusión de mediciones: el mismo modelo que el gemelo digital en Java.
 
-Qué es: un filtro de Kalman **escalar** (un solo estado: personas en el espacio) con parámetros fijos.
-Cada lectura combina tres indicadores con pesos fijos:
+Tres fuentes, cada una con su incertidumbre:
 
-* conteo de la cámara (YOLO en el borde), cuando llega;
-* CO₂ sobre el exterior, convertido a personas con un factor fijo (14,5 ppm por persona);
-* dispositivos Wi-Fi, a 0,88 personas por dispositivo.
+* conteo de la cámara (YOLO en el borde), cuando llega: varianza 0,64 personas²;
+* CO₂ por balance de masa en estado estable: ``(co2 − exterior) · área / 1000`` personas, con error
+  relativo de 35 % (más 2 personas de piso);
+* dispositivos Wi-Fi a 0,8 personas por dispositivo, con error relativo de 30 % (más 2 de piso).
 
-Qué no es: un modelo entrenado ni calibrado. Los pesos, factores y varianzas son valores iniciales de
-demostración. ``confidence_pct`` se deriva de la varianza interna del filtro (``(1 - P/5)·100``): indica
-cuánto se ha estabilizado el filtro, **no** la probabilidad de acertar. Para hablar de precisión hay que
-medir el error contra conteos reales (``eval/evaluate.py``).
+La estimación es la media ponderada por el inverso de la varianza de las fuentes disponibles: es la
+actualización de Kalman desde una creencia previa no informada. El servicio **no guarda estado** entre
+peticiones, así que un reintento del backend nunca aplica dos veces la misma medición y cualquier réplica
+responde lo mismo. ``confidence_pct = (1 − σ / capacidad) · 100``: cuánto margen de error tiene la
+estimación en relación con el tamaño del salón; **no** es la probabilidad de acertar.
+
+Los parámetros son los del backend (``app.twin.kalman`` en ``application.yml``) y ambos repositorios
+prueban los mismos casos de referencia (``tests/fusion_golden_cases.csv``). Son valores ilustrativos hasta
+medirlos con conteos reales (``eval/evaluate.py``).
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 import math
 
-CO2_PPM_PER_PERSON = 14.5
-PEOPLE_PER_WIFI_DEVICE = 0.88
-WEIGHTS_WITH_CAMERA = (0.76, 0.14, 0.10)
-WEIGHTS_WITHOUT_CAMERA = (0.65, 0.35)
-NO_CAMERA_VARIANCE_FACTOR = 3.5
+CAMERA_VARIANCE = 0.64
+CO2_RELATIVE_ERROR = 0.35
+WIFI_RELATIVE_ERROR = 0.30
+PEOPLE_PER_DEVICE = 0.8
+CO2_PPM_PER_PERSON_SQM = 1000.0
+MIN_VARIANCE = 1.0
+ERROR_FLOOR_PEOPLE = 2.0
 
 
-@dataclass
-class KalmanOccupancy:
-    process_variance: float = 0.35
-    measurement_variance: float = 1.8
-    estimate: float = 0.0
-    variance: float = 1.0
-
-    def __post_init__(self) -> None:
-        for name in ("process_variance", "measurement_variance", "estimate", "variance"):
-            value = getattr(self, name)
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-                raise ValueError(f"{name} debe ser finito")
-        if self.process_variance < 0 or self.measurement_variance <= 0 or self.variance < 0:
-            raise ValueError("Las varianzas deben ser no negativas y la varianza de medición positiva")
-        if not 0 <= self.estimate <= 1000:
-            raise ValueError("estimate debe estar entre 0 y 1000")
-
-    def update(self, yolo_count: int | None, co2_ppm: float, wifi_devices: int,
-               outdoor_co2_ppm: float = 415.0) -> tuple[int, float]:
-        if yolo_count is not None and (
-            isinstance(yolo_count, bool) or not isinstance(yolo_count, int) or not 0 <= yolo_count <= 1000
-        ):
-            raise ValueError("yolo_count debe ser un entero entre 0 y 1000 o None")
-        if isinstance(wifi_devices, bool) or not isinstance(wifi_devices, int) or not 0 <= wifi_devices <= 10000:
-            raise ValueError("wifi_devices debe ser un entero entre 0 y 10000")
-        if isinstance(co2_ppm, bool) or not isinstance(co2_ppm, (int, float)) \
-                or not math.isfinite(co2_ppm) or not 0 <= co2_ppm <= 10000:
-            raise ValueError("co2_ppm debe estar entre 0 y 10000")
-        if isinstance(outdoor_co2_ppm, bool) or not isinstance(outdoor_co2_ppm, (int, float)) \
-                or not math.isfinite(outdoor_co2_ppm) or not 300 <= outdoor_co2_ppm <= 1000:
-            raise ValueError("outdoor_co2_ppm debe estar entre 300 y 1000")
-        co2_estimate = max(0.0, (co2_ppm - outdoor_co2_ppm) / CO2_PPM_PER_PERSON)
-        wifi_estimate = max(0, wifi_devices) * PEOPLE_PER_WIFI_DEVICE
-        if yolo_count is not None:
-            camera_w, co2_w, wifi_w = WEIGHTS_WITH_CAMERA
-            observation = camera_w * max(0, yolo_count) + co2_w * co2_estimate + wifi_w * wifi_estimate
-            measurement_variance = self.measurement_variance
-        else:
-            co2_w, wifi_w = WEIGHTS_WITHOUT_CAMERA
-            observation = co2_w * co2_estimate + wifi_w * wifi_estimate
-            measurement_variance = self.measurement_variance * NO_CAMERA_VARIANCE_FACTOR
-        predicted_variance = self.variance + self.process_variance
-        gain = predicted_variance / (predicted_variance + measurement_variance)
-        self.estimate += gain * (observation - self.estimate)
-        self.variance = (1 - gain) * predicted_variance
-        return max(0, round(self.estimate)), internal_confidence(self.variance)
+@dataclass(frozen=True)
+class SourceContribution:
+    source: str
+    people: float
+    variance: float
+    weight: float
 
 
-def internal_confidence(variance: float) -> float:
-    """Estabilidad del filtro en 0–100 a partir de su varianza; no es una probabilidad calibrada."""
-    if not math.isfinite(variance) or variance < 0:
-        raise ValueError("variance debe ser finita y no negativa")
-    return round(max(0.0, min(100.0, (1 - variance / 5) * 100)), 1)
+@dataclass(frozen=True)
+class Fusion:
+    estimate: float
+    sigma: float
+    sources: tuple[SourceContribution, ...]
+
+    def people(self) -> int:
+        return max(0, math.floor(self.estimate + 0.5))
+
+    def confidence_pct(self, capacity: int) -> float:
+        return confidence_pct(self.sigma, capacity)
+
+
+def _finite(name: str, value: float, low: float, high: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) \
+            or not low <= value <= high:
+        raise ValueError(f"{name} debe estar entre {low} y {high}")
+    return float(value)
+
+
+def _count(name: str, value: int, high: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= high:
+        raise ValueError(f"{name} debe ser un entero entre 0 y {high}")
+    return value
+
+
+def _relative_variance(people: float, relative_error: float) -> float:
+    sigma = relative_error * people + ERROR_FLOOR_PEOPLE
+    return max(MIN_VARIANCE, sigma * sigma)
+
+
+def fuse_occupancy(camera_people: int | None, co2_ppm: float, wifi_devices: int, area_sqm: float,
+                   outdoor_co2_ppm: float = 420.0) -> Fusion:
+    """Fusiona una lectura sin estado previo. Lanza ``ValueError`` si alguna medición es inválida."""
+    if camera_people is not None:
+        _count("camera_people", camera_people, 1000)
+    co2 = _finite("co2_ppm", co2_ppm, 0, 10000)
+    _count("wifi_devices", wifi_devices, 10000)
+    area = _finite("area_sqm", area_sqm, 0.1, 100000)
+    outdoor = _finite("outdoor_co2_ppm", outdoor_co2_ppm, 300, 1000)
+
+    observations: list[tuple[str, float, float]] = []
+    if camera_people is not None:
+        observations.append(("camara_yolo", float(camera_people), CAMERA_VARIANCE))
+    from_co2 = max(0.0, co2 - outdoor) * area / CO2_PPM_PER_PERSON_SQM
+    observations.append(("co2_balance_masico", from_co2, _relative_variance(from_co2, CO2_RELATIVE_ERROR)))
+    from_wifi = wifi_devices * PEOPLE_PER_DEVICE
+    observations.append(("wifi_dispositivos", from_wifi, _relative_variance(from_wifi, WIFI_RELATIVE_ERROR)))
+
+    information = sum(1 / variance for _, _, variance in observations)
+    estimate = max(0.0, sum(people / variance for _, people, variance in observations) / information)
+    sources = tuple(SourceContribution(name, round(people, 3), round(variance, 3), round((1 / variance) / information, 4))
+                    for name, people, variance in observations)
+    return Fusion(estimate, math.sqrt(1 / information), sources)
+
+
+def confidence_pct(sigma: float, capacity: int) -> float:
+    """``(1 − σ / capacidad) · 100`` en [0, 100], con una cifra decimal. No es una probabilidad."""
+    if not math.isfinite(sigma) or sigma < 0:
+        raise ValueError("sigma debe ser finita y no negativa")
+    _count("capacity", capacity, 5000)
+    # Half up, like Java's Math.round, so both implementations give the same digit.
+    return math.floor(max(0.0, 1 - sigma / max(1, capacity)) * 1000 + 0.5) / 10.0
 
 
 def desk_state(people: int, objects: int, unattended_seconds: int,

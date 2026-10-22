@@ -8,7 +8,6 @@ from app.settings import (
     MAX_DESK_COUNT,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
-    MAX_TRACKED_SPACES,
     MAX_ROOM_CAPACITY,
     MAX_ROOM_POWER_KW,
     MAX_UNATTENDED_SECONDS,
@@ -26,7 +25,7 @@ def health():
 @router.get("/ready")
 def readiness(request: Request):
     """Report whether required in-process adapters were initialized for traffic."""
-    required = ("occupancy_registry", "vision_counter")
+    required = ("vision_counter",)
     missing = [name for name in required if getattr(request.app.state, name, None) is None]
     if missing:
         raise HTTPException(status_code=503, detail={"status": "not_ready", "missing": missing})
@@ -39,10 +38,11 @@ def capabilities():
         "service": "CampusNexo AI Service",
         "api_version": "v1",
         "features": [
-            {"name": "occupancy", "mode": "kalman_escalar_pesos_fijos_no_calibrado",
-             "summary": "Estimación con cámara opcional, CO2 y Wi-Fi; confidence_pct no es probabilidad."},
-            {"name": "occupancy_batch", "mode": "independent_kalman_per_space",
-             "summary": "Procesa en una petición varias lecturas, con filtros independientes por espacio."},
+            {"name": "occupancy", "mode": "fusion_varianza_inversa_no_calibrada",
+             "summary": "Fusión sin estado de cámara opcional, CO2 y Wi-Fi con el modelo del gemelo; "
+                        "confidence_pct no es probabilidad."},
+            {"name": "occupancy_batch", "mode": "stateless_fusion_per_reading",
+             "summary": "Procesa en una petición varias lecturas; cada una se fusiona por separado."},
             {"name": "thermal", "mode": "1R1C_exact_exponential",
              "summary": "Proyección térmica académica; no acciona equipos."},
             {"name": "room_assignment", "mode": "exact_rectangular_matching",
@@ -53,7 +53,6 @@ def capabilities():
              "summary": "Recomienda estados de mesa; no libera puestos automáticamente."},
         ],
         "limits": {
-            "tracked_spaces": MAX_TRACKED_SPACES,
             "occupancy_batch_items": MAX_OCCUPANCY_BATCH_ITEMS,
             "assignment_courses": MAX_ASSIGNMENT_COURSES,
             "assignment_rooms": MAX_ASSIGNMENT_ROOMS,

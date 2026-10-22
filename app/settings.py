@@ -1,6 +1,5 @@
 """Operational limits shared by validation, runtime behavior and API discovery."""
 
-MAX_TRACKED_SPACES = 2_000
 MAX_OCCUPANCY_BATCH_ITEMS = 250
 MAX_ASSIGNMENT_COURSES = 18
 MAX_ASSIGNMENT_ROOMS = 1_000

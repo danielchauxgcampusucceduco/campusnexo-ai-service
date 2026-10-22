@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "campusnexo-ai"
-version = "0.2.0"
-description = "Estimación de ocupación de CampusNexo: filtro de Kalman escalar sobre cámara, CO2 y Wi-Fi (heurística no calibrada)"
+version = "0.3.0"
+description = "Estimación de ocupación de CampusNexo: fusión sin estado de cámara, CO2 y Wi-Fi con el modelo del gemelo digital (parámetros no calibrados)"
 requires-python = ">=3.11"
 # Exact versions: the same build today and on the day of the defense.
 dependencies = [

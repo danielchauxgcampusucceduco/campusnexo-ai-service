@@ -20,11 +20,14 @@ class StrictInput(BaseModel):
 
 
 class OccupancyInput(StrictInput):
+    """Raw measurements of one room. ``yolo_people`` is the camera's own count, never a fused estimate."""
     space_id: str = Field(min_length=1, max_length=32)
     yolo_people: int | None = Field(default=None, ge=0, le=1000, strict=True)
     co2_ppm: float = Field(ge=0, le=10000, strict=True)
     wifi_devices: int = Field(ge=0, le=10000, strict=True)
-    outdoor_co2_ppm: float = Field(default=415, ge=300, le=1000, strict=True)
+    outdoor_co2_ppm: float = Field(default=420, ge=300, le=1000, strict=True)
+    area_sqm: float = Field(gt=0, le=100000, strict=True)
+    capacity: int = Field(ge=1, le=5000, strict=True)
 
     @field_validator("space_id")
     @classmethod
@@ -118,14 +121,23 @@ class AssignmentOutput(BaseModel):
     note: str | None = None
 
 
+class OccupancySourceOutput(BaseModel):
+    source: Literal["camara_yolo", "co2_balance_masico", "wifi_dispositivos"]
+    people: float
+    variance: float
+    weight: float = Field(ge=0, le=1)
+
+
 class OccupancyEstimateOutput(BaseModel):
     space_id: str
     occupancy_estimate: int = Field(ge=0)
     confidence_pct: float = Field(ge=0, le=100)
+    sigma_people: float = Field(ge=0)
     confidence_meaning: str
     method: str
     camera_available: bool
     is_estimate: Literal[True]
+    sources: list[OccupancySourceOutput]
     note: str
 
 
