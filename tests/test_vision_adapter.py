@@ -1,6 +1,7 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -98,3 +99,33 @@ def test_lazy_model_initialization_is_shared_across_concurrent_requests(monkeypa
 
     assert len(calls) == 1
     assert all(loaded is model for loaded in loaded_models)
+
+
+def test_shared_yolo_model_does_not_run_concurrent_predict_calls(monkeypatch):
+    install_image_decoder(monkeypatch)
+
+    class ConcurrentModel:
+        def __init__(self):
+            self.active = 0
+            self.maximum_active = 0
+            self.lock = Lock()
+
+        def predict(self, *, source, verbose):
+            assert verbose is False
+            with self.lock:
+                self.active += 1
+                self.maximum_active = max(self.maximum_active, self.active)
+            time.sleep(0.01)
+            with self.lock:
+                self.active -= 1
+            return [SimpleNamespace(boxes=None)]
+
+    model = ConcurrentModel()
+    counter = YoloCounter()
+    counter.model = model
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda _index: counter.count_people(b"frame"), range(8)))
+
+    assert len(results) == 8
+    assert model.maximum_active == 1
