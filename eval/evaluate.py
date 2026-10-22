@@ -153,7 +153,10 @@ def main() -> None:
         parser.error(str(exc))
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if args.json:
-        args.json.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        try:
+            args.json.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError as exc:
+            parser.error(f"no se pudo escribir el informe JSON: {exc}")
 
 
 if __name__ == "__main__":

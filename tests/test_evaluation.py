@@ -113,6 +113,23 @@ def test_cli_reports_invalid_csv_rows_without_a_traceback(tmp_path, monkeypatch,
     assert "fila 2: co2_ppm" in capsys.readouterr().err
 
 
+def test_cli_reports_json_output_failures_as_argument_errors(tmp_path, monkeypatch, capsys):
+    input_path = tmp_path / "conteos.csv"
+    input_path.write_text(
+        "space_id,co2_ppm,wifi_devices,true_people\nA-301,500,4,5\n",
+        encoding="utf-8",
+    )
+    output_directory = tmp_path / "resultado.json"
+    output_directory.mkdir()
+    monkeypatch.setattr("sys.argv", ["evaluate.py", str(input_path), "--json", str(output_directory)])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "no se pudo escribir el informe JSON" in capsys.readouterr().err
+
+
 def test_csv_reader_rejects_duplicate_headers_before_values_are_overwritten():
     import io
 
