@@ -17,6 +17,17 @@ def test_vision_route_rejects_unsupported_media_types():
     assert response.status_code == 415
 
 
+def test_vision_route_rejects_empty_body_without_loading_the_model(monkeypatch):
+    def should_not_run(_raw):
+        raise AssertionError("el adaptador no debe ejecutarse con una imagen vacía")
+
+    monkeypatch.setattr(app.state.vision_counter, "count_people", should_not_run)
+    response = client.post("/v1/vision/count", content=b"", headers={"Content-Type": "image/jpeg"})
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "La imagen no puede estar vacía"
+
+
 def test_vision_route_rejects_oversized_content_length_before_reading():
     response = client.post(
         "/v1/vision/count",

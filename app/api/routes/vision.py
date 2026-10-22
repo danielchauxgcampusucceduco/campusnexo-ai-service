@@ -28,6 +28,8 @@ async def count_people(request: Request, vision: YoloCounter = Depends(get_visio
         chunks.append(chunk)
     raw = b"".join(chunks)
     try:
+        if not raw:
+            raise HTTPException(400, "La imagen no puede estar vacía")
         return await run_in_threadpool(vision.count_people, raw)
     except VisionUnavailable as exc:
         raise HTTPException(503, str(exc)) from exc
