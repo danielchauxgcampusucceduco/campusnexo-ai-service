@@ -13,6 +13,8 @@ API FastAPI que el backend Java consulta para estimar cuántas personas hay en u
 
 Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (simulación 1R1C), `POST /v1/rooms/assignment` (asignación exacta para ≤ 18 cursos) y `GET /v1/library/desk-state` (regla de mesa). Ninguna salida acciona equipos.
 
+`GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
+
 ## Ejecutar
 
 ```sh
