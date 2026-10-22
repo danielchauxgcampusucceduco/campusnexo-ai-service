@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request
 from app.api.routes.health import router as health_router
 from app.api.routes.occupancy import router as occupancy_router
-from app.api.schemas import AssignmentInput, AssignmentOutput, DeskStateOutput, ThermalInput, ThermalRecommendationOutput
+from app.api.routes.thermal import router as thermal_router
+from app.api.schemas import AssignmentInput, AssignmentOutput, DeskStateOutput
 from app.domain.occupancy import desk_state
-from app.domain.thermal import simulate_free_warming
 from app.domain.assignment import assign_rooms
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
 from app.settings import MAX_VISION_IMAGE_BYTES
@@ -13,6 +13,7 @@ vision = YoloCounter()
 app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estimación de ocupación por fusión heurística (Kalman escalar, no calibrado), conteo YOLO opcional y utilidades académicas; sin control de actuadores.")
 app.include_router(health_router)
 app.include_router(occupancy_router)
+app.include_router(thermal_router)
 
 @app.post("/v1/vision/count")
 async def count_people(request: Request):
@@ -38,14 +39,6 @@ async def count_people(request: Request):
     finally:
         chunks.clear()
         del raw
-
-@app.post("/v1/thermal/recommendation", response_model=ThermalRecommendationOutput)
-def thermal(payload: ThermalInput):
-    try:
-        request_values = payload.model_dump(exclude={"horizon_min"})
-        request_values["max_minutes"] = payload.horizon_min
-        return simulate_free_warming(**request_values)
-    except ValueError as exc: raise HTTPException(422, str(exc))
 
 @app.post("/v1/rooms/assignment", response_model=AssignmentOutput, response_model_exclude_none=True)
 def assignment(payload: AssignmentInput):
