@@ -63,7 +63,10 @@ def thermal(payload: ThermalInput):
 
 @app.post("/v1/rooms/assignment")
 def assignment(payload: AssignmentInput):
-    try: return assign_rooms(payload.courses, payload.rooms, payload.safety_margin)
+    try:
+        courses = [course.model_dump() for course in payload.courses]
+        rooms = [room.model_dump() for room in payload.rooms]
+        return assign_rooms(courses, rooms, payload.safety_margin)
     except (ValueError, KeyError, TypeError) as exc: raise HTTPException(422, str(exc))
 
 @app.get("/v1/library/desk-state")

@@ -22,6 +22,20 @@ class ThermalInput(BaseModel):
 
 
 class AssignmentInput(BaseModel):
-    courses: list[dict]
-    rooms: list[dict]
+    courses: list["CourseAssignmentInput"] = Field(max_length=18)
+    rooms: list["RoomAssignmentInput"]
     safety_margin: float = Field(default=1.10, gt=0, le=2)
+
+
+class CourseAssignmentInput(BaseModel):
+    course_id: str = Field(min_length=1, max_length=64)
+    attendance: int = Field(ge=0, le=1000)
+
+
+class RoomAssignmentInput(BaseModel):
+    room_id: str = Field(min_length=1, max_length=64)
+    capacity: int = Field(ge=0, le=1000)
+    power_kw: float = Field(ge=0, le=1000)
+
+
+AssignmentInput.model_rebuild()
