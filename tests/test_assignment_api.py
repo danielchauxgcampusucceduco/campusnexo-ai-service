@@ -20,6 +20,24 @@ def test_assignment_endpoint_returns_a_validated_room_plan():
     body = response.json()
     assert body["feasible"] is True
     assert body["assignments"][0]["room_id"] == "A-301"
+    assert set(body) == {"feasible", "assignments", "total_nominal_power_kw", "objective", "note"}
+
+
+def test_infeasible_assignment_response_omits_success_only_fields():
+    response = client.post(
+        "/v1/rooms/assignment",
+        json={
+            "courses": [{"course_id": "IS-101", "attendance": 20}],
+            "rooms": [],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "feasible": False,
+        "assignments": [],
+        "reason": "No hay suficientes salones disponibles.",
+    }
 
 
 def test_assignment_endpoint_rejects_invalid_course_and_room_fields():
