@@ -42,7 +42,29 @@ def metrics(errors: list[float]) -> dict:
             "rmse": round(math.sqrt(sum(e * e for e in errors) / n), 3), "bias": round(sum(errors) / n, 3)}
 
 
+def _number(row: dict, column: str, line: int, minimum: float, maximum: float) -> float:
+    try:
+        value = float(row[column])
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"fila {line}: {column} debe ser un número") from exc
+    if not math.isfinite(value) or not minimum <= value <= maximum:
+        raise ValueError(f"fila {line}: {column} debe estar entre {minimum} y {maximum}")
+    return value
+
+
+def _integer(row: dict, column: str, line: int, minimum: int, maximum: int) -> int:
+    try:
+        value = int(row[column])
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"fila {line}: {column} debe ser un entero") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"fila {line}: {column} debe estar entre {minimum} y {maximum}")
+    return value
+
+
 def evaluate(rows: list[dict], tolerance: float) -> dict:
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("tolerance debe ser un número finito no negativo")
     filters: dict[str, KalmanOccupancy] = defaultdict(KalmanOccupancy)
     per_space_errors: dict[str, list[float]] = defaultdict(list)
     all_errors, with_camera, without_camera = [], [], []
@@ -51,14 +73,19 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
         missing = [column for column in REQUIRED if row.get(column, "") == ""]
         if missing:
             raise ValueError(f"fila {line}: faltan {', '.join(missing)}")
+        space_id = row["space_id"].strip()
+        if not space_id:
+            raise ValueError(f"fila {line}: space_id no puede estar vacío")
         yolo = row.get("yolo_people", "")
-        yolo_people = int(yolo) if yolo != "" else None
-        outdoor = float(row["outdoor_co2_ppm"]) if row.get("outdoor_co2_ppm") else 415.0
-        estimate, confidence = filters[row["space_id"]].update(yolo_people, float(row["co2_ppm"]),
-                                                               int(row["wifi_devices"]), outdoor)
-        error = estimate - float(row["true_people"])
+        yolo_people = _integer(row, "yolo_people", line, 0, 1000) if yolo != "" else None
+        outdoor = _number(row, "outdoor_co2_ppm", line, 300, 1000) if row.get("outdoor_co2_ppm") else 415.0
+        co2 = _number(row, "co2_ppm", line, 0, 10000)
+        wifi = _integer(row, "wifi_devices", line, 0, 10000)
+        true_people = _integer(row, "true_people", line, 0, 1000)
+        estimate, confidence = filters[space_id].update(yolo_people, co2, wifi, outdoor)
+        error = estimate - true_people
         all_errors.append(error)
-        per_space_errors[row["space_id"]].append(error)
+        per_space_errors[space_id].append(error)
         (with_camera if yolo_people is not None else without_camera).append(error)
         for low, high in BINS:
             if low <= confidence < high:
