@@ -43,6 +43,16 @@ def test_batch_rejects_duplicate_space_ids_with_standard_validation_response():
     assert response.status_code == 422
 
 
+def test_batch_rejects_space_ids_that_collide_after_trimming():
+    client = TestClient(create_app(occupancy_registry=OccupancyFilterRegistry()))
+
+    response = client.post("/v1/occupancy/estimate/batch", json={
+        "measurements": [reading("A-301", 8), reading(" A-301 ", 9)],
+    })
+
+    assert response.status_code == 422
+
+
 def test_batch_rejects_over_limit_before_updating_any_filter():
     registry = OccupancyFilterRegistry()
     client = TestClient(create_app(occupancy_registry=registry))
