@@ -4,9 +4,11 @@ from app.main import app
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
+    MAX_DESK_COUNT,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MAX_TRACKED_SPACES,
+    MAX_UNATTENDED_SECONDS,
     MAX_VISION_IMAGE_BYTES,
 )
 
@@ -30,4 +32,6 @@ def test_capabilities_endpoint_documents_algorithms_and_operational_limits():
         "assignment_rooms": MAX_ASSIGNMENT_ROOMS,
         "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
         "thermal_horizon_minutes": MAX_THERMAL_HORIZON_MINUTES,
+        "desk_count": MAX_DESK_COUNT,
+        "unattended_seconds": MAX_UNATTENDED_SECONDS,
     }
