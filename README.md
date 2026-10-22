@@ -16,6 +16,8 @@ Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (
 
 La regla de mesas limita cada conteo (`people`, `objects`) a 0–1.000 y el tiempo sin atención a 0–86.400 segundos. Las entradas decimales de sensores y parámetros rechazan booleanos JSON; los conteos y duraciones requieren enteros explícitos. Las peticiones de imagen vacías se rechazan antes de cargar el detector.
 
+La asignación también limita asistencia y capacidad a 1.000, potencia nominal a 1.000 kW y catálogo a 18 cursos/1.000 salones. Estos máximos se publican en `/v1/capabilities` junto con los límites de las demás rutas.
+
 Para asignar salones, una pareja curso-salón solo es elegible cuando la capacidad cubre `attendance × safety_margin`; el coste es la potencia nominal del salón. El algoritmo húngaro rectangular obtiene el óptimo en `O(cursos² × salones)`, devuelve un resultado infactible si no existe matching completo y conserva el orden de entrada para resolver empates de forma determinista.
 
 `GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
