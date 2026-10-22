@@ -39,7 +39,7 @@ def capabilities():
              "summary": "Procesa en una petición varias lecturas, con filtros independientes por espacio."},
             {"name": "thermal", "mode": "1R1C_exact_exponential",
              "summary": "Proyección térmica académica; no acciona equipos."},
-            {"name": "room_assignment", "mode": "exact_dynamic_programming",
+            {"name": "room_assignment", "mode": "exact_rectangular_matching",
              "summary": "Minimiza potencia nominal para instancias pequeñas."},
             {"name": "vision", "mode": "optional_yolo",
              "summary": "Conteo disponible solo si el extra de visión y sus pesos están configurados."},

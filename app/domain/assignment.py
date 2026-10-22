@@ -1,5 +1,4 @@
-"""Asignación óptima exacta por programación dinámica para instancias pequeñas."""
-from functools import lru_cache
+"""Asignación óptima exacta mediante matching rectangular de coste mínimo."""
 import math
 
 from app.settings import MAX_ASSIGNMENT_COURSES
@@ -36,24 +35,69 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
         room_ids.add(room_id)
     if len(rooms) < len(courses):
         return {"feasible": False, "assignments": [], "reason": "No hay suficientes salones disponibles."}
-    # El coste minimiza potencia nominal ponderada. Toda sala ha de cumplir capacidad mínima.
-    @lru_cache(None)
-    def best(index: int, used: int):
-        if index == len(courses): return (0.0, ())
-        course = courses[index]
-        seats = int(course["attendance"])
-        options = []
-        for room_index, room in enumerate(rooms):
-            if used & (1 << room_index) or room["capacity"] < seats * safety_margin:
-                continue
-            tail = best(index + 1, used | (1 << room_index))
-            if tail is not None:
-                options.append((float(room["power_kw"]) + tail[0], (room_index,) + tail[1]))
-        return min(options, key=lambda x: x[0]) if options else None
-    result = best(0, 0)
-    if result is None:
+    # Rectangular Hungarian algorithm: O(courses² × rooms), bounded by the small course limit.
+    # Ineligible room-course pairs have infinite cost and can never be selected.
+    course_count, room_count = len(courses), len(rooms)
+    feasible = True
+    if course_count == 0:
+        choices: tuple[int, ...] = ()
+    else:
+        costs = [
+            [float(room["power_kw"]) if room["capacity"] >= course["attendance"] * safety_margin else math.inf
+             for room in rooms]
+            for course in courses
+        ]
+        row_potential = [0.0] * (course_count + 1)
+        column_potential = [0.0] * (room_count + 1)
+        matched_row = [0] * (room_count + 1)
+        previous_column = [0] * (room_count + 1)
+        for row in range(1, course_count + 1):
+            matched_row[0] = row
+            min_cost = [math.inf] * (room_count + 1)
+            used = [False] * (room_count + 1)
+            column = 0
+            while True:
+                used[column] = True
+                active_row = matched_row[column]
+                delta = math.inf
+                next_column = 0
+                for candidate in range(1, room_count + 1):
+                    if used[candidate]:
+                        continue
+                    reduced = costs[active_row - 1][candidate - 1] - row_potential[active_row] - column_potential[candidate]
+                    if reduced < min_cost[candidate]:
+                        min_cost[candidate] = reduced
+                        previous_column[candidate] = column
+                    if min_cost[candidate] < delta:
+                        delta = min_cost[candidate]
+                        next_column = candidate
+                if not math.isfinite(delta):
+                    feasible = False
+                    break
+                for candidate in range(room_count + 1):
+                    if used[candidate]:
+                        row_potential[matched_row[candidate]] += delta
+                        column_potential[candidate] -= delta
+                    else:
+                        min_cost[candidate] -= delta
+                column = next_column
+                if matched_row[column] == 0:
+                    break
+            if not feasible:
+                break
+            while True:
+                previous = previous_column[column]
+                matched_row[column] = matched_row[previous]
+                column = previous
+                if column == 0:
+                    break
+        assignment = [-1] * course_count
+        for column in range(1, room_count + 1):
+            if matched_row[column] > 0:
+                assignment[matched_row[column] - 1] = column - 1
+        choices = tuple(assignment)
+    if not feasible or any(index < 0 for index in choices):
         return {"feasible": False, "assignments": [], "reason": "No existe una asignación que cumpla el margen de capacidad."}
-    choices = result[1]
     assignments = []
     for course, room_index in zip(courses, choices):
         room = rooms[room_index]
@@ -61,5 +105,6 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
                             "attendance": course["attendance"], "capacity": room["capacity"],
                             "utilization_pct": round(course["attendance"] / room["capacity"] * 100, 1),
                             "nominal_power_kw": room["power_kw"]})
-    return {"feasible": True, "assignments": assignments, "total_nominal_power_kw": round(result[0], 3),
+    total_power = sum(float(rooms[index]["power_kw"]) for index in choices)
+    return {"feasible": True, "assignments": assignments, "total_nominal_power_kw": round(total_power, 3),
             "objective": "minimize_sum_of_nominal_power", "note": "Optimización académica; valida horarios, distancias y accesibilidad antes de aplicar."}

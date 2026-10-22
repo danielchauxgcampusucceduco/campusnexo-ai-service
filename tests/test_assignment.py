@@ -21,6 +21,33 @@ def test_assignment_minimizes_power_while_meeting_capacity_margin():
     assert result["total_nominal_power_kw"] == 2.5
 
 
+def test_assignment_finds_global_match_when_the_cheapest_room_is_needed_by_another_course():
+    result = assign_rooms(
+        [{"course_id": "large", "attendance": 20}, {"course_id": "small", "attendance": 10}],
+        [
+            {"room_id": "small-room", "capacity": 10, "power_kw": 1},
+            {"room_id": "large-room", "capacity": 20, "power_kw": 2},
+        ],
+        safety_margin=1,
+    )
+
+    assert {row["course_id"]: row["room_id"] for row in result["assignments"]} == {
+        "large": "large-room", "small": "small-room",
+    }
+    assert result["total_nominal_power_kw"] == 3
+
+
+def test_assignment_scales_to_many_rooms_without_enumerating_room_subsets():
+    courses = [{"course_id": f"C{i}", "attendance": 10} for i in range(18)]
+    rooms = [{"room_id": f"R{i}", "capacity": 10, "power_kw": float(i + 1)} for i in range(200)]
+
+    result = assign_rooms(courses, rooms, safety_margin=1)
+
+    assert result["feasible"] is True
+    assert len({row["room_id"] for row in result["assignments"]}) == 18
+    assert result["total_nominal_power_kw"] == sum(range(1, 19))
+
+
 def test_assignment_reports_infeasible_capacity_and_room_count():
     course = [{"course_id": "A", "attendance": 20}]
 
