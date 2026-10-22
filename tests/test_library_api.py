@@ -28,3 +28,10 @@ def test_library_route_rejects_negative_query_values():
     response = client.get("/v1/library/desk-state?people=-1")
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("query", ["people=1001", "objects=1001", "unattended_seconds=86401"])
+def test_library_route_bounds_untrusted_query_values(query):
+    response = client.get(f"/v1/library/desk-state?{query}")
+
+    assert response.status_code == 422
