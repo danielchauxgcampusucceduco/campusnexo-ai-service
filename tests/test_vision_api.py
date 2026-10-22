@@ -27,6 +27,16 @@ def test_vision_route_rejects_oversized_content_length_before_reading():
     assert response.status_code == 413
 
 
+def test_vision_route_enforces_stream_limit_when_content_length_understates_body():
+    response = client.post(
+        "/v1/vision/count",
+        content=b"x" * (8 * 1024 * 1024 + 1),
+        headers={"Content-Type": "image/jpeg", "Content-Length": "1"},
+    )
+
+    assert response.status_code == 413
+
+
 def test_vision_route_maps_decode_failure_to_bad_request(monkeypatch):
     def reject_image(_raw):
         raise ValueError("No se pudo decodificar la imagen")
