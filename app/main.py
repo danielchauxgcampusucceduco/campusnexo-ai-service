@@ -58,7 +58,10 @@ async def count_people(request: Request):
 
 @app.post("/v1/thermal/recommendation")
 def thermal(payload: ThermalInput):
-    try: return simulate_free_warming(**payload.model_dump())
+    try:
+        request_values = payload.model_dump(exclude={"horizon_min"})
+        request_values["max_minutes"] = payload.horizon_min
+        return simulate_free_warming(**request_values)
     except ValueError as exc: raise HTTPException(422, str(exc))
 
 @app.post("/v1/rooms/assignment")
