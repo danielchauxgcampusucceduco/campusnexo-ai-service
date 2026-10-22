@@ -14,6 +14,8 @@ API FastAPI que el backend Java consulta para estimar cuántas personas hay en u
 
 Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (proyección exponencial exacta de un modelo 1R1C), `POST /v1/rooms/assignment` (matching rectangular de coste mínimo para ≤ 18 cursos y ≤ 1.000 salones) y `GET /v1/library/desk-state` (regla de mesa). La asignación minimiza la potencia nominal sin enumerar subconjuntos de salones. Ninguna salida acciona equipos. El modelo térmico valida parámetros finitos y acotados, informa `1R1C_exact_exponential` y requiere calibración local antes de usar sus proyecciones.
 
+Para asignar salones, una pareja curso-salón solo es elegible cuando la capacidad cubre `attendance × safety_margin`; el coste es la potencia nominal del salón. El algoritmo húngaro rectangular obtiene el óptimo en `O(cursos² × salones)`, devuelve un resultado infactible si no existe matching completo y conserva el orden de entrada para resolver empates de forma determinista.
+
 `GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
 
 `GET /health` confirma que el proceso HTTP responde. `GET /ready` comprueba que el registro de ocupación y el contador de visión opcional se inicializaron; solo devuelve `503` si falta un adaptador requerido. La visión puede seguir deshabilitada sin pesos y el servicio continúa listo para sus demás rutas.
