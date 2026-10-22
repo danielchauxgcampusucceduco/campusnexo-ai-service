@@ -20,7 +20,7 @@ def test_thermal_endpoint_returns_a_bounded_recommendation():
 
     assert response.status_code == 200
     body = response.json()
-    assert body["model"] == "1R1C_forward_euler"
+    assert body["model"] == "1R1C_exact_exponential"
     assert 0 <= body["safe_off_duration_min"] <= 12
     assert "no controla equipos" in body["note"]
 

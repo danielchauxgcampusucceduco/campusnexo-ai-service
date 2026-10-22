@@ -17,6 +17,7 @@ def test_capabilities_endpoint_documents_algorithms_and_operational_limits():
     features = {feature["name"]: feature for feature in body["features"]}
     assert body["service"] == "CampusNexo AI Service"
     assert features["occupancy"]["mode"] == "kalman_escalar_pesos_fijos_no_calibrado"
+    assert features["thermal"]["mode"] == "1R1C_exact_exponential"
     assert features["vision"]["mode"] == "optional_yolo"
     assert "no libera puestos automáticamente" in features["library_desk_state"]["summary"]
     assert body["limits"] == {

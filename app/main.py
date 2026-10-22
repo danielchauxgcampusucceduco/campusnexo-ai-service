@@ -38,7 +38,7 @@ def capabilities():
         "features": [
             {"name": "occupancy", "mode": "kalman_escalar_pesos_fijos_no_calibrado",
              "summary": "Estimación con cámara opcional, CO2 y Wi-Fi; confidence_pct no es probabilidad."},
-            {"name": "thermal", "mode": "1R1C_forward_euler",
+            {"name": "thermal", "mode": "1R1C_exact_exponential",
              "summary": "Proyección térmica académica; no acciona equipos."},
             {"name": "room_assignment", "mode": "exact_dynamic_programming",
              "summary": "Minimiza potencia nominal para instancias pequeñas."},

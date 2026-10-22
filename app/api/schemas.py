@@ -3,7 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.settings import MAX_ASSIGNMENT_COURSES, MAX_THERMAL_HORIZON_MINUTES
+from app.settings import (
+    MAX_ASSIGNMENT_COURSES,
+    MAX_THERMAL_HORIZON_MINUTES,
+    MIN_THERMAL_PARAMETER,
+)
 
 
 class OccupancyInput(BaseModel):
@@ -19,8 +23,8 @@ class ThermalInput(BaseModel):
     outside_temp_c: float = Field(ge=-30, le=60)
     occupancy: int = Field(ge=0, le=1000)
     lighting_kw: float = Field(ge=0, le=100)
-    resistance_c_per_kw: float = Field(default=2.4, gt=0, le=1000)
-    capacitance_kwh_per_c: float = Field(default=1.85, gt=0, le=1000)
+    resistance_c_per_kw: float = Field(default=2.4, ge=MIN_THERMAL_PARAMETER, le=1000)
+    capacitance_kwh_per_c: float = Field(default=1.85, ge=MIN_THERMAL_PARAMETER, le=1000)
     comfort_limit_c: float = Field(default=24.5, ge=10, le=35)
     horizon_min: int = Field(default=20, ge=1, le=MAX_THERMAL_HORIZON_MINUTES)
 
@@ -72,7 +76,7 @@ class OccupancyEstimateOutput(BaseModel):
 
 
 class ThermalRecommendationOutput(BaseModel):
-    model: Literal["1R1C_forward_euler"]
+    model: Literal["1R1C_exact_exponential"]
     safe_off_duration_min: int = Field(ge=0, le=120)
     projected_temp_at_horizon_c: float
     initial_rate_c_per_min: float
