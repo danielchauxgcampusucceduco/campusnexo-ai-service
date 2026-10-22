@@ -48,3 +48,17 @@ def test_invalid_new_space_measurement_does_not_evict_a_valid_filter():
         registry.estimate("B", None, float("nan"), 10)
 
     assert update(registry, "A", 20) == update(control, "A", 20)
+
+
+def test_invalid_existing_space_measurement_does_not_refresh_lru_recency():
+    registry = OccupancyFilterRegistry(max_spaces=2)
+    update(registry, "A", 20)
+    update(registry, "B", 10)
+
+    with pytest.raises(ValueError):
+        registry.estimate("A", None, 500, -1)
+
+    update(registry, "C", 15)
+    restarted_a = update(registry, "A", 0)[0]
+
+    assert restarted_a == 0
