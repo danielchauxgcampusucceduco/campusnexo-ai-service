@@ -7,6 +7,7 @@ from app.api.routes.occupancy import router as occupancy_router
 from app.api.routes.thermal import router as thermal_router
 from app.api.routes.vision import router as vision_router
 from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
+from app.infrastructure.request_context import request_context
 from app.infrastructure.vision import YoloCounter
 
 
@@ -26,6 +27,7 @@ def create_app(
         occupancy_registry if occupancy_registry is not None else OccupancyFilterRegistry()
     )
     application.state.vision_counter = vision_counter if vision_counter is not None else YoloCounter()
+    application.middleware("http")(request_context)
     for router in (
         health_router,
         occupancy_router,
