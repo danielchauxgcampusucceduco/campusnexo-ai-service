@@ -13,6 +13,7 @@ cuánto se ha estabilizado el filtro, **no** la probabilidad de acertar. Para ha
 medir el error contra conteos reales (``eval/evaluate.py``).
 """
 from dataclasses import dataclass
+import math
 
 CO2_PPM_PER_PERSON = 14.5
 PEOPLE_PER_WIFI_DEVICE = 0.88
@@ -28,8 +29,28 @@ class KalmanOccupancy:
     estimate: float = 0.0
     variance: float = 1.0
 
+    def __post_init__(self) -> None:
+        for name in ("process_variance", "measurement_variance", "estimate", "variance"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} debe ser finito")
+        if self.process_variance < 0 or self.measurement_variance <= 0 or self.variance < 0:
+            raise ValueError("Las varianzas deben ser no negativas y la varianza de medición positiva")
+        if self.estimate < 0:
+            raise ValueError("estimate debe ser no negativo")
+
     def update(self, yolo_count: int | None, co2_ppm: float, wifi_devices: int,
                outdoor_co2_ppm: float = 415.0) -> tuple[int, float]:
+        if yolo_count is not None and (
+            isinstance(yolo_count, bool) or not isinstance(yolo_count, int) or yolo_count < 0
+        ):
+            raise ValueError("yolo_count debe ser un entero no negativo o None")
+        if isinstance(wifi_devices, bool) or not isinstance(wifi_devices, int) or wifi_devices < 0:
+            raise ValueError("wifi_devices debe ser un entero no negativo")
+        if not math.isfinite(co2_ppm) or co2_ppm < 0:
+            raise ValueError("co2_ppm debe ser finito y no negativo")
+        if not math.isfinite(outdoor_co2_ppm) or outdoor_co2_ppm < 0:
+            raise ValueError("outdoor_co2_ppm debe ser finito y no negativo")
         co2_estimate = max(0.0, (co2_ppm - outdoor_co2_ppm) / CO2_PPM_PER_PERSON)
         wifi_estimate = max(0, wifi_devices) * PEOPLE_PER_WIFI_DEVICE
         if yolo_count is not None:

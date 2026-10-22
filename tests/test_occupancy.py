@@ -20,6 +20,24 @@ def test_without_camera_the_filter_is_less_sure():
     assert unsure < sure
 
 
+def test_filter_rejects_invalid_measurements_without_poisoning_its_state():
+    import pytest
+
+    kalman = KalmanOccupancy()
+    for values in ((None, float("nan"), 2), (None, 500, -1), (1.5, 500, 2)):
+        with pytest.raises(ValueError):
+            kalman.update(*values)
+    assert kalman.estimate == 0.0
+    assert kalman.variance == 1.0
+
+
+def test_filter_rejects_invalid_initial_covariance():
+    import pytest
+
+    with pytest.raises(ValueError, match="varianza de medición"):
+        KalmanOccupancy(measurement_variance=0)
+
+
 def test_confidence_is_bounded_and_only_reflects_variance():
     assert internal_confidence(0) == 100.0
     assert internal_confidence(10) == 0.0
