@@ -88,6 +88,18 @@ def test_assignment_endpoint_rejects_ambiguous_duplicate_ids():
     assert response.status_code == 422
 
 
+def test_assignment_endpoint_rejects_ids_that_collide_after_whitespace_normalization():
+    response = client.post("/v1/rooms/assignment", json={
+        "courses": [
+            {"course_id": " IS-101 ", "attendance": 10},
+            {"course_id": "IS-101", "attendance": 12},
+        ],
+        "rooms": [{"room_id": " A-301 ", "capacity": 24, "power_kw": 1}],
+    })
+
+    assert response.status_code == 422
+
+
 def test_assignment_endpoint_enforces_the_documented_exact_solver_limit():
     response = client.post(
         "/v1/rooms/assignment",
