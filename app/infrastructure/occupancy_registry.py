@@ -23,8 +23,14 @@ class OccupancyFilterRegistry:
         outdoor_co2_ppm: float = 415.0,
     ) -> tuple[int, float]:
         with self._lock:
-            estimator = self._filters.setdefault(space_id, KalmanOccupancy())
+            estimator = self._filters.get(space_id)
+            is_new = estimator is None
+            if estimator is None:
+                estimator = KalmanOccupancy()
+            result = estimator.update(yolo_people, co2_ppm, wifi_devices, outdoor_co2_ppm)
+            if is_new:
+                self._filters[space_id] = estimator
             self._filters.move_to_end(space_id)
             while len(self._filters) > self._max_spaces:
                 self._filters.popitem(last=False)
-            return estimator.update(yolo_people, co2_ppm, wifi_devices, outdoor_co2_ppm)
+            return result

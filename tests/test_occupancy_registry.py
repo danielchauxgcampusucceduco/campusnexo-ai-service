@@ -36,3 +36,15 @@ def test_registry_evicts_the_least_recently_used_space_at_capacity():
 def test_registry_requires_a_positive_capacity():
     with pytest.raises(ValueError, match="debe ser positivo"):
         OccupancyFilterRegistry(max_spaces=0)
+
+
+def test_invalid_new_space_measurement_does_not_evict_a_valid_filter():
+    registry = OccupancyFilterRegistry(max_spaces=1)
+    control = OccupancyFilterRegistry(max_spaces=1)
+    update(registry, "A", 20)
+    update(control, "A", 20)
+
+    with pytest.raises(ValueError, match="co2_ppm"):
+        registry.estimate("B", None, float("nan"), 10)
+
+    assert update(registry, "A", 20) == update(control, "A", 20)
