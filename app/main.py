@@ -1,5 +1,3 @@
-from collections import OrderedDict
-from threading import Lock
 from fastapi import FastAPI, HTTPException, Request
 from app.api.schemas import (
     AssignmentOutput,
@@ -10,14 +8,14 @@ from app.api.schemas import (
     ThermalInput,
     ThermalRecommendationOutput,
 )
-from app.domain.occupancy import KalmanOccupancy, desk_state
+from app.domain.occupancy import desk_state
 from app.domain.thermal import simulate_free_warming
 from app.domain.assignment import assign_rooms
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
+from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
 
 vision = YoloCounter()
-filters: OrderedDict[str, KalmanOccupancy] = OrderedDict()
-filters_lock = Lock()
+occupancy_filters = OccupancyFilterRegistry()
 
 app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estimación de ocupación por fusión heurística (Kalman escalar, no calibrado), conteo YOLO opcional y utilidades académicas; sin control de actuadores.")
 
@@ -26,12 +24,9 @@ def health(): return {"status": "ok", "vision": "optional; enabled when the visi
 
 @app.post("/v1/occupancy/estimate", response_model=OccupancyEstimateOutput)
 def estimate_occupancy(payload: OccupancyInput):
-    with filters_lock:
-        estimator = filters.setdefault(payload.space_id, KalmanOccupancy())
-        filters.move_to_end(payload.space_id)
-        while len(filters) > 2000:
-            filters.popitem(last=False)
-        estimate, confidence = estimator.update(payload.yolo_people, payload.co2_ppm, payload.wifi_devices, payload.outdoor_co2_ppm)
+    estimate, confidence = occupancy_filters.estimate(
+        payload.space_id, payload.yolo_people, payload.co2_ppm, payload.wifi_devices, payload.outdoor_co2_ppm
+    )
     return {"space_id": payload.space_id, "occupancy_estimate": estimate, "confidence_pct": confidence,
             "confidence_meaning": "estabilidad interna del filtro (varianza), no probabilidad de acierto",
             "method": "kalman_escalar_pesos_fijos_no_calibrado",
