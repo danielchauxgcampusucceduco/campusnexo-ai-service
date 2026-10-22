@@ -52,6 +52,17 @@ def test_middleware_exposes_the_sanitized_id_to_route_handlers():
     assert response.json()["request_id"] == "demo-123"
 
 
+def test_middleware_preserves_correlation_id_on_client_validation_errors():
+    response = TestClient(create_app()).post(
+        "/v1/occupancy/estimate",
+        headers={"X-Request-ID": "validation-42"},
+        json={"space_id": "A-301", "co2_ppm": -1, "wifi_devices": 1},
+    )
+
+    assert response.status_code == 422
+    assert response.headers["X-Request-ID"] == "validation-42"
+
+
 def test_middleware_logs_failure_status_when_endpoint_raises(caplog):
     application = FastAPI()
     application.middleware("http")(request_context)
