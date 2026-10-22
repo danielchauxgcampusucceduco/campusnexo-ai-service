@@ -4,10 +4,13 @@ from app.api.schemas import CapabilitiesOutput
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
+    MAX_ASSIGNMENT_ATTENDANCE,
     MAX_DESK_COUNT,
     MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MAX_TRACKED_SPACES,
+    MAX_ROOM_CAPACITY,
+    MAX_ROOM_POWER_KW,
     MAX_UNATTENDED_SECONDS,
     MAX_VISION_IMAGE_BYTES,
 )
@@ -54,6 +57,9 @@ def capabilities():
             "occupancy_batch_items": MAX_OCCUPANCY_BATCH_ITEMS,
             "assignment_courses": MAX_ASSIGNMENT_COURSES,
             "assignment_rooms": MAX_ASSIGNMENT_ROOMS,
+            "course_attendance": MAX_ASSIGNMENT_ATTENDANCE,
+            "room_capacity": MAX_ROOM_CAPACITY,
+            "room_power_kw": MAX_ROOM_POWER_KW,
             "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
             "thermal_horizon_minutes": MAX_THERMAL_HORIZON_MINUTES,
             "desk_count": MAX_DESK_COUNT,
