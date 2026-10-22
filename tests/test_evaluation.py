@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from eval.evaluate import evaluate, main
@@ -75,3 +76,38 @@ def test_cli_reports_invalid_tolerance_as_argument_error(monkeypatch, capsys):
 
     assert error.value.code == 2
     assert "debe ser un número finito no negativo" in capsys.readouterr().err
+
+
+def test_cli_writes_the_same_per_space_report_to_stdout_and_json(tmp_path, monkeypatch, capsys):
+    input_path = tmp_path / "conteos.csv"
+    output_path = tmp_path / "resultado.json"
+    input_path.write_text(
+        "space_id,co2_ppm,wifi_devices,true_people,yolo_people\nA-301,500,4,5,5\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["evaluate.py", str(input_path), "--json", str(output_path)],
+    )
+
+    main()
+
+    printed = json.loads(capsys.readouterr().out)
+    saved = json.loads(output_path.read_text(encoding="utf-8"))
+    assert printed == saved
+    assert printed["per_space"]["A-301"]["n"] == 1
+
+
+def test_cli_reports_invalid_csv_rows_without_a_traceback(tmp_path, monkeypatch, capsys):
+    input_path = tmp_path / "conteos.csv"
+    input_path.write_text(
+        "space_id,co2_ppm,wifi_devices,true_people\nA-301,nan,4,5\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sys.argv", ["evaluate.py", str(input_path)])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "fila 2: co2_ppm" in capsys.readouterr().err

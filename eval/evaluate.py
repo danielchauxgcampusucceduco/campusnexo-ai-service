@@ -123,7 +123,10 @@ def main() -> None:
         rows = list(csv.DictReader(handle))
     if not rows:
         sys.exit("El CSV no tiene filas: no hay nada que medir.")
-    result = evaluate(rows, args.tolerance)
+    try:
+        result = evaluate(rows, args.tolerance)
+    except ValueError as exc:
+        parser.error(str(exc))
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if args.json:
         args.json.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
