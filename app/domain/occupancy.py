@@ -70,6 +70,8 @@ class KalmanOccupancy:
 
 def internal_confidence(variance: float) -> float:
     """Estabilidad del filtro en 0–100 a partir de su varianza; no es una probabilidad calibrada."""
+    if not math.isfinite(variance) or variance < 0:
+        raise ValueError("variance debe ser finita y no negativa")
     return round(max(0.0, min(100.0, (1 - variance / 5) * 100)), 1)
 
 

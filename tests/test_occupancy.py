@@ -46,7 +46,14 @@ def test_confidence_is_bounded_and_only_reflects_variance():
 def test_confidence_saturates_for_variance_outside_its_reporting_scale():
     assert internal_confidence(5) == 0.0
     assert internal_confidence(100) == 0.0
-    assert internal_confidence(-1) == 100.0
+
+
+def test_confidence_rejects_invalid_variance():
+    import pytest
+
+    for variance in (-1, float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="variance"):
+            internal_confidence(variance)
 
 
 def test_desk_rules():
