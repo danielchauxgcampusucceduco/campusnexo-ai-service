@@ -1,4 +1,6 @@
 """HTTP request contracts for the public API."""
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -36,6 +38,37 @@ class RoomAssignmentInput(BaseModel):
     room_id: str = Field(min_length=1, max_length=64)
     capacity: int = Field(ge=0, le=1000)
     power_kw: float = Field(ge=0, le=1000)
+
+
+class OccupancyEstimateOutput(BaseModel):
+    space_id: str
+    occupancy_estimate: int = Field(ge=0)
+    confidence_pct: float = Field(ge=0, le=100)
+    confidence_meaning: str
+    method: str
+    camera_available: bool
+    is_estimate: Literal[True]
+    note: str
+
+
+class ThermalRecommendationOutput(BaseModel):
+    model: Literal["1R1C_forward_euler"]
+    safe_off_duration_min: int = Field(ge=0, le=120)
+    projected_temp_at_horizon_c: float
+    initial_rate_c_per_min: float
+    comfort_limit_c: float
+    note: str
+
+
+class DeskStateOutput(BaseModel):
+    state: Literal[
+        "OCCUPIED_VERIFIED",
+        "POSSIBLE_ABANDONMENT",
+        "RELEASE_RECOMMENDED",
+        "AVAILABLE",
+    ]
+    is_automatic_release: Literal[False]
+    note: str
 
 
 AssignmentInput.model_rebuild()

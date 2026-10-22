@@ -1,7 +1,14 @@
 from collections import OrderedDict
 from threading import Lock
 from fastapi import FastAPI, HTTPException, Request
-from app.api.schemas import AssignmentInput, OccupancyInput, ThermalInput
+from app.api.schemas import (
+    AssignmentInput,
+    DeskStateOutput,
+    OccupancyEstimateOutput,
+    OccupancyInput,
+    ThermalInput,
+    ThermalRecommendationOutput,
+)
 from app.domain.occupancy import KalmanOccupancy, desk_state
 from app.domain.thermal import simulate_free_warming
 from app.domain.assignment import assign_rooms
@@ -16,7 +23,7 @@ app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estim
 @app.get("/health")
 def health(): return {"status": "ok", "vision": "optional; enabled when the vision extra and weights are available"}
 
-@app.post("/v1/occupancy/estimate")
+@app.post("/v1/occupancy/estimate", response_model=OccupancyEstimateOutput)
 def estimate_occupancy(payload: OccupancyInput):
     with filters_lock:
         estimator = filters.setdefault(payload.space_id, KalmanOccupancy())
@@ -56,7 +63,7 @@ async def count_people(request: Request):
         chunks.clear()
         del raw
 
-@app.post("/v1/thermal/recommendation")
+@app.post("/v1/thermal/recommendation", response_model=ThermalRecommendationOutput)
 def thermal(payload: ThermalInput):
     try:
         request_values = payload.model_dump(exclude={"horizon_min"})
@@ -72,7 +79,7 @@ def assignment(payload: AssignmentInput):
         return assign_rooms(courses, rooms, payload.safety_margin)
     except (ValueError, KeyError, TypeError) as exc: raise HTTPException(422, str(exc))
 
-@app.get("/v1/library/desk-state")
+@app.get("/v1/library/desk-state", response_model=DeskStateOutput)
 def library_desk_state(people: int = 0, objects: int = 0, unattended_seconds: int = 0):
     if min(people, objects, unattended_seconds) < 0: raise HTTPException(422, "Los parámetros no pueden ser negativos")
     return {"state": desk_state(people, objects, unattended_seconds), "is_automatic_release": False,
