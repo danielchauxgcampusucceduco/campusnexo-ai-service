@@ -149,3 +149,23 @@ def test_assignment_endpoint_caps_room_catalog_size():
     )
 
     assert response.status_code == 422
+
+
+def test_assignment_endpoint_accepts_documented_field_maxima():
+    response = client.post("/v1/rooms/assignment", json={
+        "courses": [{"course_id": "MAX", "attendance": 1000}],
+        "rooms": [{"room_id": "MAX", "capacity": 1000, "power_kw": 1000}],
+        "safety_margin": 1,
+    })
+
+    assert response.status_code == 200
+    assert response.json()["feasible"] is True
+
+
+def test_assignment_endpoint_rejects_values_above_documented_field_maxima():
+    response = client.post("/v1/rooms/assignment", json={
+        "courses": [{"course_id": "MAX", "attendance": 1001}],
+        "rooms": [{"room_id": "MAX", "capacity": 1000, "power_kw": 1000}],
+    })
+
+    assert response.status_code == 422
