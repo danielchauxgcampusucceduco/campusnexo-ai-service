@@ -40,6 +40,24 @@ class RoomAssignmentInput(BaseModel):
     power_kw: float = Field(ge=0, le=1000)
 
 
+class AssignmentRecordOutput(BaseModel):
+    course_id: str
+    room_id: str
+    attendance: int
+    capacity: int
+    utilization_pct: float
+    nominal_power_kw: float
+
+
+class AssignmentOutput(BaseModel):
+    feasible: bool
+    assignments: list[AssignmentRecordOutput]
+    total_nominal_power_kw: float | None = None
+    objective: str | None = None
+    reason: str | None = None
+    note: str | None = None
+
+
 class OccupancyEstimateOutput(BaseModel):
     space_id: str
     occupancy_estimate: int = Field(ge=0)

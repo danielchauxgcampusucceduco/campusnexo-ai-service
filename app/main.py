@@ -2,6 +2,7 @@ from collections import OrderedDict
 from threading import Lock
 from fastapi import FastAPI, HTTPException, Request
 from app.api.schemas import (
+    AssignmentOutput,
     AssignmentInput,
     DeskStateOutput,
     OccupancyEstimateOutput,
@@ -71,7 +72,7 @@ def thermal(payload: ThermalInput):
         return simulate_free_warming(**request_values)
     except ValueError as exc: raise HTTPException(422, str(exc))
 
-@app.post("/v1/rooms/assignment")
+@app.post("/v1/rooms/assignment", response_model=AssignmentOutput, response_model_exclude_none=True)
 def assignment(payload: AssignmentInput):
     try:
         courses = [course.model_dump() for course in payload.courses]
