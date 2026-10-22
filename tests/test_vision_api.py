@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from threading import get_ident
 
 from app.main import app
 
@@ -59,3 +60,20 @@ def test_vision_route_returns_count_metadata_without_echoing_image(monkeypatch):
         "privacy": "frame_discarded_in_process",
         "model": "demo.pt",
     }
+
+
+def test_vision_route_runs_blocking_model_inference_off_the_event_loop(monkeypatch):
+    caller_thread = get_ident()
+    inference_threads = []
+    monkeypatch.setattr(
+        app.state.vision_counter,
+        "count_people",
+        lambda _raw: inference_threads.append(get_ident()) or {
+            "people_count": 0, "privacy": "frame_discarded_in_process", "model": "demo.pt",
+        },
+    )
+
+    response = client.post("/v1/vision/count", content=b"image", headers={"Content-Type": "image/jpeg"})
+
+    assert response.status_code == 200
+    assert inference_threads and inference_threads[0] != caller_thread

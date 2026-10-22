@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 
 from app.api.dependencies import get_vision_counter
 from app.infrastructure.vision import VisionUnavailable, YoloCounter
@@ -27,7 +28,7 @@ async def count_people(request: Request, vision: YoloCounter = Depends(get_visio
         chunks.append(chunk)
     raw = b"".join(chunks)
     try:
-        return vision.count_people(raw)
+        return await run_in_threadpool(vision.count_people, raw)
     except VisionUnavailable as exc:
         raise HTTPException(503, str(exc)) from exc
     except ValueError as exc:
