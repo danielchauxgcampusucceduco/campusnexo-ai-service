@@ -16,6 +16,8 @@ Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (
 
 `GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
 
+`GET /health` confirma que el proceso HTTP responde. `GET /ready` comprueba que el registro de ocupación y el contador de visión opcional se inicializaron; solo devuelve `503` si falta un adaptador requerido. La visión puede seguir deshabilitada sin pesos y el servicio continúa listo para sus demás rutas.
+
 Ejemplo de lote:
 
 ```json
@@ -48,4 +50,4 @@ Visión (opcional): `pip install -e ".[vision]"`, o la imagen con `docker build 
 
 ## Despliegue
 
-`Dockerfile` (puerto `PORT`, por defecto 8001; health check en `/health`). En Render se despliega como Web Service desde este repositorio; su URL va en `AI_SERVICE_URL` del backend.
+`Dockerfile` (puerto `PORT`, por defecto 8001; health check en `/ready`). En Render se despliega como Web Service desde este repositorio; su URL va en `AI_SERVICE_URL` del backend.
