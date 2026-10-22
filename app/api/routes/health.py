@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 
 from app.api.schemas import CapabilitiesOutput
 from app.settings import (
@@ -15,6 +15,16 @@ router = APIRouter(tags=["health", "capabilities"])
 @router.get("/health")
 def health():
     return {"status": "ok", "vision": "optional; enabled when the vision extra and weights are available"}
+
+
+@router.get("/ready")
+def readiness(request: Request):
+    """Report whether required in-process adapters were initialized for traffic."""
+    required = ("occupancy_registry", "vision_counter")
+    missing = [name for name in required if getattr(request.app.state, name, None) is None]
+    if missing:
+        raise HTTPException(status_code=503, detail={"status": "not_ready", "missing": missing})
+    return {"status": "ready", "optional_features": {"vision": "may be unavailable without model weights"}}
 
 
 @router.get("/v1/capabilities", response_model=CapabilitiesOutput)
