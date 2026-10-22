@@ -32,6 +32,28 @@ def test_assignment_reports_infeasible_capacity_and_room_count():
     assert no_rooms["assignments"] == too_small["assignments"] == []
 
 
+def test_equal_power_solutions_keep_the_input_room_order_deterministically():
+    courses = [{"course_id": "A", "attendance": 10}]
+    rooms = [
+        {"room_id": "R-SECOND", "capacity": 12, "power_kw": 1.0},
+        {"room_id": "R-FIRST", "capacity": 12, "power_kw": 1.0},
+    ]
+
+    result = assign_rooms(courses, rooms, safety_margin=1.0)
+
+    assert result["assignments"][0]["room_id"] == "R-SECOND"
+    assert courses == [{"course_id": "A", "attendance": 10}]
+    assert rooms[0]["room_id"] == "R-SECOND"
+
+
+def test_empty_course_set_is_a_feasible_zero_power_plan():
+    result = assign_rooms([], [{"room_id": "A-301", "capacity": 24, "power_kw": 1.8}])
+
+    assert result["feasible"] is True
+    assert result["assignments"] == []
+    assert result["total_nominal_power_kw"] == 0.0
+
+
 @pytest.mark.parametrize("course_count", [19])
 def test_assignment_rejects_instances_above_exact_solver_limit(course_count):
     courses = [{"course_id": str(i), "attendance": 1} for i in range(course_count)]
