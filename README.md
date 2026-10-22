@@ -11,7 +11,7 @@ API FastAPI que el backend Java consulta para estimar cuántas personas hay en u
 | Filtro de Kalman del gemelo | Otra implementación, con varianza por fuente | Dominio Java del backend | El gemelo digital en vivo |
 | `confidence_pct` | Estabilidad interna del filtro, calculada de su varianza | — | **No** es probabilidad de acierto; ver `eval/` |
 
-Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (simulación 1R1C), `POST /v1/rooms/assignment` (asignación exacta para ≤ 18 cursos) y `GET /v1/library/desk-state` (regla de mesa). Ninguna salida acciona equipos.
+Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (proyección exponencial exacta de un modelo 1R1C), `POST /v1/rooms/assignment` (asignación exacta para ≤ 18 cursos) y `GET /v1/library/desk-state` (regla de mesa). Ninguna salida acciona equipos. El modelo térmico valida parámetros finitos y acotados, informa `1R1C_exact_exponential` y requiere calibración local antes de usar sus proyecciones.
 
 `GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
 
