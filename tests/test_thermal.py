@@ -84,3 +84,11 @@ def test_thermal_domain_requires_integer_count_and_horizon(field, value):
     with pytest.raises(ValueError, match=f"{field}.*entero"):
         simulate_free_warming(**({"current_temp_c": 20, "outside_temp_c": 14, "occupancy": 1,
                                   "lighting_kw": 1} | {field: value}))
+
+
+@pytest.mark.parametrize("field", ["current_temp_c", "outside_temp_c", "lighting_kw"])
+def test_thermal_domain_rejects_booleans_as_physical_measurements(field):
+    values = {"current_temp_c": 20, "outside_temp_c": 14, "occupancy": 1, "lighting_kw": 1}
+
+    with pytest.raises(ValueError, match=field):
+        simulate_free_warming(**(values | {field: True}))

@@ -3,7 +3,8 @@ import math
 
 
 def _require_range(name: str, value: float, minimum: float, maximum: float) -> None:
-    if not math.isfinite(value) or not minimum <= value <= maximum:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) \
+            or not math.isfinite(value) or not minimum <= value <= maximum:
         raise ValueError(f"{name} debe estar entre {minimum} y {maximum}")
 
 
