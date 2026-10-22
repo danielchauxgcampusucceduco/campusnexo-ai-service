@@ -2,7 +2,7 @@ import re
 import logging
 
 from fastapi.testclient import TestClient
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from app.api.app_factory import create_app
 from app.infrastructure.request_context import request_context
@@ -29,6 +29,19 @@ def test_middleware_replaces_an_invalid_request_id():
     response = TestClient(create_app()).get("/health", headers={"X-Request-ID": "bad id"})
 
     assert re.fullmatch(r"[a-f0-9]{32}", response.headers["X-Request-ID"])
+
+
+def test_middleware_exposes_the_sanitized_id_to_route_handlers():
+    application = FastAPI()
+    application.middleware("http")(request_context)
+
+    @application.get("/context")
+    def context(request: Request):
+        return {"request_id": request.state.request_id}
+
+    response = TestClient(application).get("/context", headers={"X-Request-ID": "demo-123"})
+
+    assert response.json()["request_id"] == "demo-123"
 
 
 def test_middleware_logs_failure_status_when_endpoint_raises(caplog):

@@ -14,6 +14,7 @@ REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 async def request_context(request: Request, call_next: RequestResponseEndpoint) -> Response:
     supplied_id = request.headers.get("x-request-id", "")
     request_id = supplied_id if REQUEST_ID_PATTERN.fullmatch(supplied_id) else uuid.uuid4().hex
+    request.state.request_id = request_id
     started = time.perf_counter()
     status_code = 500
     try:
