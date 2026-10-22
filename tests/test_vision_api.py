@@ -30,7 +30,7 @@ def test_vision_route_maps_decode_failure_to_bad_request(monkeypatch):
     def reject_image(_raw):
         raise ValueError("No se pudo decodificar la imagen")
 
-    monkeypatch.setattr("app.main.vision.count_people", reject_image)
+    monkeypatch.setattr("app.api.routes.vision.vision.count_people", reject_image)
     response = client.post(
         "/v1/vision/count",
         content=b"invalid",
@@ -43,7 +43,7 @@ def test_vision_route_maps_decode_failure_to_bad_request(monkeypatch):
 
 def test_vision_route_returns_count_metadata_without_echoing_image(monkeypatch):
     monkeypatch.setattr(
-        "app.main.vision.count_people",
+        "app.api.routes.vision.vision.count_people",
         lambda _raw: {"people_count": 3, "privacy": "frame_discarded_in_process", "model": "demo.pt"},
     )
     response = client.post(
