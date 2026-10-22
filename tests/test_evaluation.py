@@ -1,6 +1,6 @@
 import pytest
 
-from eval.evaluate import evaluate
+from eval.evaluate import evaluate, main
 
 
 def test_evaluation_reports_error_metrics_by_space_in_stable_key_order():
@@ -65,3 +65,13 @@ def test_evaluation_rejects_invalid_measurement_rows(column, value):
 
     with pytest.raises(ValueError, match="fila 2"):
         evaluate([row], tolerance=1)
+
+
+def test_cli_reports_invalid_tolerance_as_argument_error(monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["evaluate.py", "conteos.csv", "--tolerance", "-1"])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "debe ser un número finito no negativo" in capsys.readouterr().err

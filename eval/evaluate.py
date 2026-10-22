@@ -62,6 +62,16 @@ def _integer(row: dict, column: str, line: int, minimum: int, maximum: int) -> i
     return value
 
 
+def nonnegative_finite(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("debe ser un número finito no negativo") from exc
+    if not math.isfinite(parsed) or parsed < 0:
+        raise argparse.ArgumentTypeError("debe ser un número finito no negativo")
+    return parsed
+
+
 def evaluate(rows: list[dict], tolerance: float) -> dict:
     if not math.isfinite(tolerance) or tolerance < 0:
         raise ValueError("tolerance debe ser un número finito no negativo")
@@ -106,7 +116,7 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("csv", type=Path)
-    parser.add_argument("--tolerance", type=float, default=2.0, help="personas de error aceptadas")
+    parser.add_argument("--tolerance", type=nonnegative_finite, default=2.0, help="personas de error aceptadas")
     parser.add_argument("--json", type=Path, help="guardar el resultado en este archivo")
     args = parser.parse_args()
     with args.csv.open(newline="", encoding="utf-8") as handle:
