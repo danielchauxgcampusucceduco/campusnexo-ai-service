@@ -8,12 +8,28 @@ API FastAPI que el backend Java consulta para estimar cuántas personas hay en u
 |---|---|---|---|
 | Conteo de personas con **YOLO** (+ ByteTrack) | Modelo de visión **preentrenado** (Ultralytics, COCO); no se reentrenó para el campus | En el borde, junto a la cámara (`campusnexo-backend/tools/edge`) y, opcionalmente, en `POST /v1/vision/count` | El gemelo digital del backend recibe sus conteos por MQTT |
 | **Estimación de ocupación** `POST /v1/occupancy/estimate` | Filtro de Kalman **escalar** con pesos fijos sobre cámara, CO₂ y Wi-Fi. **Heurística no calibrada**, no es un modelo entrenado | Este servicio | El flujo de evaluación del backend (`HttpOccupancyEstimatorAdapter`, con reintento y respaldo local) |
+| **Estimación por lotes** `POST /v1/occupancy/estimate/batch` | El mismo filtro, aislado por `space_id`; una petición procesa hasta 250 espacios únicos y conserva el orden de entrada | Este servicio | Integraciones que actualizan varias salas juntas |
 | Filtro de Kalman del gemelo | Otra implementación, con varianza por fuente | Dominio Java del backend | El gemelo digital en vivo |
 | `confidence_pct` | Estabilidad interna del filtro, calculada de su varianza | — | **No** es probabilidad de acierto; ver `eval/` |
 
 Las demás rutas son utilidades académicas: `POST /v1/thermal/recommendation` (proyección exponencial exacta de un modelo 1R1C), `POST /v1/rooms/assignment` (asignación exacta para ≤ 18 cursos) y `GET /v1/library/desk-state` (regla de mesa). Ninguna salida acciona equipos. El modelo térmico valida parámetros finitos y acotados, informa `1R1C_exact_exponential` y requiere calibración local antes de usar sus proyecciones.
 
 `GET /v1/capabilities` publica los algoritmos y límites vigentes para que una integración pueda descubrir qué ofrece el servicio. La ruta distingue la visión YOLO opcional y explicita que el porcentaje de confianza no representa probabilidad de acierto.
+
+Ejemplo de lote:
+
+```json
+{
+  "measurements": [
+    {"space_id": "421-A", "yolo_people": 18, "co2_ppm": 680, "wifi_devices": 16},
+    {"space_id": "422-A", "co2_ppm": 910, "wifi_devices": 24}
+  ]
+}
+```
+
+Cada `space_id` debe aparecer una sola vez por petición. Los lotes vacíos, duplicados y mayores al límite
+publicado en `limits.occupancy_batch_items` reciben `422`; el estado del filtro sigue siendo independiente
+para cada espacio y se reinicia junto al proceso.
 
 ## Ejecutar
 
