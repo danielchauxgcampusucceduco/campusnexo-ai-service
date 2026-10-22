@@ -14,7 +14,9 @@ Esta carpeta no trae resultados: trae el método para producirlos.
    python eval/evaluate.py conteos.csv --tolerance 2 --json resultados.json
    ```
 
-6. Reportar n, MAE, RMSE, sesgo (con y sin cámara) y la tabla de calibración, junto con la versión del servicio, el CSV y las condiciones (luz, oclusiones, ventilación).
+6. Revisar n, MAE, RMSE y sesgo globales, por salón y con/sin cámara, además de la tabla de calibración. Acompañar el resultado con la versión del servicio, el CSV y las condiciones (luz, oclusiones, ventilación).
+
+El evaluador valida que las mediciones sean finitas y estén dentro de los rangos de la API; indica el número de fila cuando un registro no cumple el contrato. La tolerancia de error debe ser finita y no negativa.
 
 ## Cómo leer `confidence_pct`
 
