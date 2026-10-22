@@ -117,6 +117,18 @@ def test_equal_cost_matching_remains_deterministic_across_repeated_runs():
     assert [row["room_id"] for row in first["assignments"]] == ["R1", "R2"]
 
 
+def test_domain_normalizes_identifiers_without_mutating_caller_records():
+    courses = [{"course_id": " A ", "attendance": 2}]
+    rooms = [{"room_id": " R ", "capacity": 4, "power_kw": 1}]
+
+    result = assign_rooms(courses, rooms)
+
+    assert result["assignments"][0]["course_id"] == "A"
+    assert result["assignments"][0]["room_id"] == "R"
+    assert courses[0]["course_id"] == " A "
+    assert rooms[0]["room_id"] == " R "
+
+
 def test_empty_course_set_is_a_feasible_zero_power_plan():
     result = assign_rooms([], [{"room_id": "A-301", "capacity": 24, "power_kw": 1.8}])
 
@@ -133,7 +145,7 @@ def test_assignment_rejects_instances_above_exact_solver_limit(course_count):
         assign_rooms(courses, [], 1.0)
 
 
-@pytest.mark.parametrize("margin", [0, -0.1, 2.01])
+@pytest.mark.parametrize("margin", [0, -0.1, 2.01, True, float("nan")])
 def test_assignment_rejects_invalid_safety_margin(margin):
     with pytest.raises(ValueError, match="fuera de rango"):
         assign_rooms([], [], margin)

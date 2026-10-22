@@ -12,29 +12,42 @@ def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 
         )
     if len(rooms) > MAX_ASSIGNMENT_ROOMS:
         raise ValueError(f"La demo admite hasta {MAX_ASSIGNMENT_ROOMS} salones")
-    if not 0 < safety_margin <= 2:
+    if isinstance(safety_margin, bool) or not isinstance(safety_margin, (int, float)) \
+            or not math.isfinite(safety_margin) or not 0 < safety_margin <= 2:
         raise ValueError("safety_margin fuera de rango")
     course_ids: set[str] = set()
+    normalized_courses = []
     for course in courses:
+        if not isinstance(course, dict):
+            raise ValueError("course debe ser un registro")
         course_id = course.get("course_id")
         attendance = course.get("attendance")
-        if not isinstance(course_id, str) or not course_id.strip() or course_id in course_ids:
+        if not isinstance(course_id, str) or not course_id.strip() or course_id.strip() in course_ids:
             raise ValueError("course_id debe ser único y no vacío")
         if isinstance(attendance, bool) or not isinstance(attendance, int) or attendance < 0:
             raise ValueError(f"attendance inválido para {course_id}")
+        course_id = course_id.strip()
         course_ids.add(course_id)
+        normalized_courses.append(course | {"course_id": course_id})
     room_ids: set[str] = set()
+    normalized_rooms = []
     for room in rooms:
+        if not isinstance(room, dict):
+            raise ValueError("room debe ser un registro")
         room_id = room.get("room_id")
         capacity = room.get("capacity")
         power = room.get("power_kw")
-        if not isinstance(room_id, str) or not room_id.strip() or room_id in room_ids:
+        if not isinstance(room_id, str) or not room_id.strip() or room_id.strip() in room_ids:
             raise ValueError("room_id debe ser único y no vacío")
         if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < 1:
             raise ValueError(f"capacity inválida para {room_id}")
         if isinstance(power, bool) or not isinstance(power, (int, float)) or not math.isfinite(power) or power < 0:
             raise ValueError(f"power_kw inválida para {room_id}")
+        room_id = room_id.strip()
         room_ids.add(room_id)
+        normalized_rooms.append(room | {"room_id": room_id})
+    courses = normalized_courses
+    rooms = normalized_rooms
     if len(rooms) < len(courses):
         return {"feasible": False, "assignments": [], "reason": "No hay suficientes salones disponibles."}
     # Rectangular Hungarian algorithm: O(courses² × rooms), bounded by the small course limit.
