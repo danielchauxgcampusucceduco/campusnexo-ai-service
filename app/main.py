@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, Request
+from app.api.routes.assignment import router as assignment_router
 from app.api.routes.health import router as health_router
 from app.api.routes.occupancy import router as occupancy_router
 from app.api.routes.thermal import router as thermal_router
-from app.api.schemas import AssignmentInput, AssignmentOutput, DeskStateOutput
+from app.api.schemas import DeskStateOutput
 from app.domain.occupancy import desk_state
-from app.domain.assignment import assign_rooms
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
 from app.settings import MAX_VISION_IMAGE_BYTES
 
@@ -14,6 +14,7 @@ app = FastAPI(title="CampusNexo AI Service", version="0.2.0", description="Estim
 app.include_router(health_router)
 app.include_router(occupancy_router)
 app.include_router(thermal_router)
+app.include_router(assignment_router)
 
 @app.post("/v1/vision/count")
 async def count_people(request: Request):
@@ -39,14 +40,6 @@ async def count_people(request: Request):
     finally:
         chunks.clear()
         del raw
-
-@app.post("/v1/rooms/assignment", response_model=AssignmentOutput, response_model_exclude_none=True)
-def assignment(payload: AssignmentInput):
-    try:
-        courses = [course.model_dump() for course in payload.courses]
-        rooms = [room.model_dump() for room in payload.rooms]
-        return assign_rooms(courses, rooms, payload.safety_margin)
-    except (ValueError, KeyError, TypeError) as exc: raise HTTPException(422, str(exc))
 
 @app.get("/v1/library/desk-state", response_model=DeskStateOutput)
 def library_desk_state(people: int = 0, objects: int = 0, unattended_seconds: int = 0):
