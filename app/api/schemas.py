@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.settings import MAX_ASSIGNMENT_COURSES, MAX_THERMAL_HORIZON_MINUTES
+
 
 class OccupancyInput(BaseModel):
     space_id: str = Field(min_length=1, max_length=32)
@@ -20,11 +22,11 @@ class ThermalInput(BaseModel):
     resistance_c_per_kw: float = Field(default=2.4, gt=0, le=1000)
     capacitance_kwh_per_c: float = Field(default=1.85, gt=0, le=1000)
     comfort_limit_c: float = Field(default=24.5, ge=10, le=35)
-    horizon_min: int = Field(default=20, ge=1, le=120)
+    horizon_min: int = Field(default=20, ge=1, le=MAX_THERMAL_HORIZON_MINUTES)
 
 
 class AssignmentInput(BaseModel):
-    courses: list["CourseAssignmentInput"] = Field(max_length=18)
+    courses: list["CourseAssignmentInput"] = Field(max_length=MAX_ASSIGNMENT_COURSES)
     rooms: list["RoomAssignmentInput"]
     safety_margin: float = Field(default=1.10, gt=0, le=2)
 

@@ -1,0 +1,6 @@
+"""Operational limits shared by validation, runtime behavior and API discovery."""
+
+MAX_TRACKED_SPACES = 2_000
+MAX_ASSIGNMENT_COURSES = 18
+MAX_VISION_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_THERMAL_HORIZON_MINUTES = 120

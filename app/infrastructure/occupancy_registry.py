@@ -3,10 +3,11 @@ from collections import OrderedDict
 from threading import Lock
 
 from app.domain.occupancy import KalmanOccupancy
+from app.settings import MAX_TRACKED_SPACES
 
 
 class OccupancyFilterRegistry:
-    def __init__(self, max_spaces: int = 2_000):
+    def __init__(self, max_spaces: int = MAX_TRACKED_SPACES):
         if max_spaces < 1:
             raise ValueError("max_spaces debe ser positivo")
         self._max_spaces = max_spaces

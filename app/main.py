@@ -14,6 +14,12 @@ from app.domain.thermal import simulate_free_warming
 from app.domain.assignment import assign_rooms
 from app.infrastructure.vision import YoloCounter, VisionUnavailable
 from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
+from app.settings import (
+    MAX_ASSIGNMENT_COURSES,
+    MAX_THERMAL_HORIZON_MINUTES,
+    MAX_TRACKED_SPACES,
+    MAX_VISION_IMAGE_BYTES,
+)
 
 vision = YoloCounter()
 occupancy_filters = OccupancyFilterRegistry()
@@ -42,10 +48,10 @@ def capabilities():
              "summary": "Recomienda estados de mesa; no libera puestos automáticamente."},
         ],
         "limits": {
-            "tracked_spaces": 2_000,
-            "assignment_courses": 18,
-            "vision_image_bytes": 8 * 1024 * 1024,
-            "thermal_horizon_minutes": 120,
+            "tracked_spaces": MAX_TRACKED_SPACES,
+            "assignment_courses": MAX_ASSIGNMENT_COURSES,
+            "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
+            "thermal_horizon_minutes": MAX_THERMAL_HORIZON_MINUTES,
         },
     }
 
@@ -66,7 +72,7 @@ async def count_people(request: Request):
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(415, "Envía el cuerpo binario con Content-Type image/jpeg, image/png o image/webp")
-    limit = 8 * 1024 * 1024
+    limit = MAX_VISION_IMAGE_BYTES
     content_length = request.headers.get("content-length")
     if content_length and content_length.isdigit() and int(content_length) > limit:
         raise HTTPException(413, "Imagen supera 8 MiB")

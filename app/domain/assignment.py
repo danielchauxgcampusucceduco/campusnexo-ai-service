@@ -1,9 +1,15 @@
 """Asignación óptima exacta por programación dinámica para instancias pequeñas."""
 from functools import lru_cache
 
+from app.settings import MAX_ASSIGNMENT_COURSES
+
+
 def assign_rooms(courses: list[dict], rooms: list[dict], safety_margin: float = 1.10) -> dict:
-    if len(courses) > 18:
-        raise ValueError("La demo exacta admite hasta 18 cursos; use un solver MILP para instancias mayores")
+    if len(courses) > MAX_ASSIGNMENT_COURSES:
+        raise ValueError(
+            f"La demo exacta admite hasta {MAX_ASSIGNMENT_COURSES} cursos; "
+            "use un solver MILP para instancias mayores"
+        )
     if not 0 < safety_margin <= 2:
         raise ValueError("safety_margin fuera de rango")
     if len(rooms) < len(courses):
