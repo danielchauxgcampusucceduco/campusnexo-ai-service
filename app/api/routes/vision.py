@@ -1,15 +1,15 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.api.dependencies import get_vision_counter
 from app.infrastructure.vision import VisionUnavailable, YoloCounter
 from app.settings import MAX_VISION_IMAGE_BYTES
 
 router = APIRouter(prefix="/v1/vision", tags=["vision"])
-vision = YoloCounter()
 ACCEPTED_IMAGE_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
 
 
 @router.post("/count")
-async def count_people(request: Request):
+async def count_people(request: Request, vision: YoloCounter = Depends(get_vision_counter)):
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if content_type not in ACCEPTED_IMAGE_TYPES:
         raise HTTPException(415, "Envía el cuerpo binario con Content-Type image/jpeg, image/png o image/webp")

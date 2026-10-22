@@ -1,14 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.dependencies import get_occupancy_registry
 from app.api.schemas import OccupancyEstimateOutput, OccupancyInput
 from app.infrastructure.occupancy_registry import OccupancyFilterRegistry
 
 router = APIRouter(prefix="/v1/occupancy", tags=["occupancy"])
-occupancy_filters = OccupancyFilterRegistry()
 
 
 @router.post("/estimate", response_model=OccupancyEstimateOutput)
-def estimate_occupancy(payload: OccupancyInput):
+def estimate_occupancy(
+    payload: OccupancyInput,
+    occupancy_filters: OccupancyFilterRegistry = Depends(get_occupancy_registry),
+):
     estimate, confidence = occupancy_filters.estimate(
         payload.space_id, payload.yolo_people, payload.co2_ppm, payload.wifi_devices, payload.outdoor_co2_ppm
     )
