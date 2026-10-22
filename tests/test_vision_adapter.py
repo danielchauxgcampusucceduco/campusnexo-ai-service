@@ -1,4 +1,6 @@
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 from types import SimpleNamespace
 
 import pytest
@@ -76,3 +78,23 @@ def test_yolo_adapter_rejects_an_undecodable_frame(monkeypatch):
 
     with pytest.raises(ValueError, match="No se pudo decodificar la imagen"):
         YoloCounter().count_people(b"not-an-image")
+
+
+def test_lazy_model_initialization_is_shared_across_concurrent_requests(monkeypatch):
+    calls = []
+    calls_lock = Lock()
+    model = FakeModel(None)
+
+    def load_model(_path):
+        with calls_lock:
+            calls.append("loaded")
+        return model
+
+    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=load_model))
+    counter = YoloCounter()
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        loaded_models = list(pool.map(lambda _index: counter._load(), range(32)))
+
+    assert len(calls) == 1
+    assert all(loaded is model for loaded in loaded_models)
