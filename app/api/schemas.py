@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.settings import (
     MAX_ASSIGNMENT_COURSES,
+    MAX_OCCUPANCY_BATCH_ITEMS,
     MAX_THERMAL_HORIZON_MINUTES,
     MIN_THERMAL_PARAMETER,
 )
@@ -20,6 +21,17 @@ class OccupancyInput(StrictInput):
     co2_ppm: float = Field(ge=0, le=10000)
     wifi_devices: int = Field(ge=0, le=10000)
     outdoor_co2_ppm: float = Field(default=415, ge=300, le=1000)
+
+
+class OccupancyBatchInput(StrictInput):
+    measurements: list[OccupancyInput] = Field(min_length=1, max_length=MAX_OCCUPANCY_BATCH_ITEMS)
+
+    @model_validator(mode="after")
+    def unique_spaces(self):
+        space_ids = [measurement.space_id for measurement in self.measurements]
+        if len(space_ids) != len(set(space_ids)):
+            raise ValueError("space_id debe ser único dentro de measurements")
+        return self
 
 
 class ThermalInput(StrictInput):
@@ -87,6 +99,10 @@ class OccupancyEstimateOutput(BaseModel):
     camera_available: bool
     is_estimate: Literal[True]
     note: str
+
+
+class OccupancyBatchOutput(BaseModel):
+    estimates: list[OccupancyEstimateOutput]
 
 
 class ThermalRecommendationOutput(BaseModel):
