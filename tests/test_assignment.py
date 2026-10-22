@@ -88,6 +88,15 @@ def test_assignment_reports_infeasible_capacity_and_room_count():
     assert no_rooms["assignments"] == too_small["assignments"] == []
 
 
+def test_safety_margin_capacity_boundary_is_inclusive():
+    course = [{"course_id": "A", "attendance": 20}]
+    exact = assign_rooms(course, [{"room_id": "R1", "capacity": 22, "power_kw": 1}])
+    below = assign_rooms(course, [{"room_id": "R2", "capacity": 21, "power_kw": 1}])
+
+    assert exact["feasible"] is True
+    assert below["feasible"] is False
+
+
 def test_equal_power_solutions_keep_the_input_room_order_deterministically():
     courses = [{"course_id": "A", "attendance": 10}]
     rooms = [
