@@ -1,0 +1,31 @@
+name: AI service
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install with pinned versions
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: pytest -q
+      - name: Quality gate of the tuned parameters
+        run: python -m entrenamiento.ajustar_parametros --escenas 4000 --salida /tmp/parametros.json
+      - name: OpenAPI contract for the backend
+        run: python -m scripts.exportar_openapi --salida openapi.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: openapi.json
+      - name: Container image (without vision)
+        run: docker build -t campusnexo-ai:${{ github.sha }} .
