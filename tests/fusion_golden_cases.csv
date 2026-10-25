@@ -1,0 +1,9 @@
+# Casos de referencia del modelo de fusión de ocupación (cámara, balance de CO2, Wi-Fi).
+# Los usan las pruebas del backend Java y del servicio de IA en Python: si cambia un parámetro, cambian ambos.
+caso,camara,co2_ppm,wifi,area_m2,co2_exterior_ppm,estimacion,sigma,capacidad,confianza_pct
+aula_llena_con_camara,26,780,30,48,420,25.9005,0.7931,36,97.8
+aula_sin_camara,,820,20,48,420,17.2101,5.3623,32,83.2
+aula_vacia,0,425,1,48,420,0.1078,0.7085,36,98.0
+biblioteca_concurrida,33,573,41,216,420,32.9993,0.7968,120,99.3
+laboratorio_sobrecupo,22,980,22,27,420,21.8673,0.7905,15,94.7
+camara_caida_co2_alto,,1450,33,50,420,31.3459,8.8891,36,75.3
