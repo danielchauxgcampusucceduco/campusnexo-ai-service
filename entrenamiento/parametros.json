@@ -1,0 +1,98 @@
+{
+  "confianza_minima": 0.5,
+  "mae_conteo": 0.8495,
+  "sesgo": -0.8495,
+  "camera_variance": 1.0648,
+  "tasa_docente": 0.9545,
+  "ocupacion_fantasma": 0.0,
+  "aprobado": true,
+  "candidatos": [
+    {
+      "confianza_minima": 0.25,
+      "mae_conteo": 0.8452,
+      "sesgo": -0.7977,
+      "camera_variance": 1.1108,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.3,
+      "mae_conteo": 0.8438,
+      "sesgo": -0.8073,
+      "camera_variance": 1.1016,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.35,
+      "mae_conteo": 0.845,
+      "sesgo": -0.8165,
+      "camera_variance": 1.0943,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.4,
+      "mae_conteo": 0.8455,
+      "sesgo": -0.827,
+      "camera_variance": 1.0831,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.45,
+      "mae_conteo": 0.8508,
+      "sesgo": -0.8377,
+      "camera_variance": 1.0799,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.5,
+      "mae_conteo": 0.8495,
+      "sesgo": -0.8495,
+      "camera_variance": 1.0648,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.55,
+      "mae_conteo": 0.8495,
+      "sesgo": -0.8495,
+      "camera_variance": 1.0648,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.6,
+      "mae_conteo": 0.8495,
+      "sesgo": -0.8495,
+      "camera_variance": 1.0648,
+      "tasa_docente": 0.9545,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.65,
+      "mae_conteo": 3.228,
+      "sesgo": -3.228,
+      "camera_variance": 6.1,
+      "tasa_docente": 0.812,
+      "ocupacion_fantasma": 0.0
+    },
+    {
+      "confianza_minima": 0.7,
+      "mae_conteo": 5.5695,
+      "sesgo": -5.5695,
+      "camera_variance": 14.0732,
+      "tasa_docente": 0.6771,
+      "ocupacion_fantasma": 0.0
+    }
+  ],
+  "origen": "escenas_sinteticas",
+  "escenas": 4000,
+  "ruido": {
+    "perdida": 0.05,
+    "desplazamiento": 0.01,
+    "falsos": 0.05
+  }
+}
