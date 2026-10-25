@@ -1,0 +1,28 @@
+# Secrets never go to git: only the .example files are versioned.
+.env
+.env.*
+!.env.example
+secrets.h
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+# Model weights and training runs: published as release assets, never in git.
+*.pt
+*.onnx
+entrenamiento/runs/
+entrenamiento/modelos/
+# Images of people: personal data, only with consent and never in git.
+entrenamiento/datasets/
+# The pilot emulator lives outside the repository: a local copy is never versioned.
+edge/emulador/
+# Room-specific files produced on the edge device.
+calibracion-*.json
+puestos-*.json
+verdad.csv
+salones.txt
+# Contract exported by scripts/exportar_openapi.py (the CI publishes it as an artifact).
+openapi.json

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "campusnexo-ai"
+version = "0.4.0"
+description = "Aprendizaje automático de CampusNexo: ocupación, asignación de salones, anomalías de sensores, pronóstico y visión de borde"
+requires-python = ">=3.11"
+# Exact versions: the same build today and on the day of the defense.
+dependencies = [
+    "fastapi==0.115.14",
+    "uvicorn[standard]==0.34.3",
+    "pydantic==2.11.7",
+    "numpy==2.2.6",
+    # zoneinfo needs the IANA database; Windows and slim images do not ship it.
+    "tzdata==2025.2",
+]
+
+[project.optional-dependencies]
+# YOLO and OpenCV: the edge camera, calibration, retraining and /v1/vision/count.
+vision = ["ultralytics==8.3.150", "opencv-python-headless==4.11.0.86"]
+# MQTT publishing from the edge, when a broker is used instead of HTTPS.
+edge = ["paho-mqtt==2.1.0"]
+# Load test of the backend ingestion (QA-3).
+carga = ["httpx==0.28.1"]
+test = ["pytest==8.4.1", "httpx==0.28.1"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The tests import the eval tool as well as the app package.
+pythonpath = ["."]
