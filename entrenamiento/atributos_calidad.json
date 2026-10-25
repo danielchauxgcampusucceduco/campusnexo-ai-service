@@ -1,0 +1,8 @@
+{
+  "_nota": "Escenarios de atributos de calidad de la piloto (QA-1 exactitud, QA-2 desempeño). Un modelo o parámetro solo se promueve si cumple todos los que su medición incluye.",
+  "mae_conteo_max": 1.0,
+  "tasa_docente_min": 0.95,
+  "recall_persona_min": 0.95,
+  "precision_persona_min": 0.90,
+  "inferencia_ms_max": 250
+}
