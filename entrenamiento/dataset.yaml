@@ -1,0 +1,13 @@
+# Dataset de reentrenamiento de YOLO para las salas de cómputo (formato Ultralytics).
+# Las imágenes y etiquetas viven en entrenamiento/datasets/ (fuera de git): son datos personales de quienes aparecen
+# y solo se capturan con su consentimiento (captura.py). "cpu" no existe en COCO: por eso se reentrena.
+path: datasets/salas
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: persona
+  1: silla
+  2: mesa
+  3: monitor
+  4: cpu
