@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI
 from app.api.routes.assignment import router as assignment_router
 from app.api.routes.health import router as health_router
 from app.api.routes.occupancy import router as occupancy_router
+from app.api.routes.sensors import router as sensors_router
 from app.api.routes.vision import router as vision_router
 from app.infrastructure.api_key import require_api_key
 from app.infrastructure.request_context import request_context
@@ -23,7 +24,7 @@ def create_app(vision_counter: YoloCounter | None = None, api_key: str | None = 
         version="0.4.0",
         description=(
             "Aprendizaje automático de CampusNexo, solo para el backend: estimación de ocupación con el mismo "
-            "modelo de fusión que el gemelo digital, asignación de cursos a salones "
+            "modelo de fusión que el gemelo digital, asignación de cursos a salones, anomalías de sensores "
             "y conteo YOLO opcional. No acciona equipos."
         ),
     )
@@ -32,6 +33,6 @@ def create_app(vision_counter: YoloCounter | None = None, api_key: str | None = 
     application.middleware("http")(request_context)
     application.include_router(health_router)
     protected = [Depends(require_api_key)]
-    for router in (occupancy_router, assignment_router, vision_router):
+    for router in (occupancy_router, assignment_router, sensors_router, vision_router):
         application.include_router(router, dependencies=protected)
     return application
