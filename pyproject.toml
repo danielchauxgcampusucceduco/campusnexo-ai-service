@@ -19,7 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # YOLO and OpenCV: the edge camera, calibration, retraining and /v1/vision/count.
-vision = ["ultralytics==8.3.150", "opencv-python-headless==4.11.0.86"]
+vision = ["ultralytics==8.4.188", "opencv-python-headless==4.11.0.86"]
 # MQTT publishing from the edge, when a broker is used instead of HTTPS.
 edge = ["paho-mqtt==2.1.0"]
 # Load test of the backend ingestion (QA-3).
