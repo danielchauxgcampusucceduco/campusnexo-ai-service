@@ -3,7 +3,8 @@
 
 Entrada: un CSV con una fila por lectura (ver ``plantilla_conteos.csv``). ``true_people`` es el conteo de
 referencia hecho por una persona (sin identificar a nadie). ``yolo_people`` puede ir vacío si la cámara no
-estaba disponible. ``area_sqm`` y ``capacity`` son los del salón en el catálogo. El estimador no tiene
+estaba disponible; ``wifi_devices`` es opcional y ``co2_ppm``/``outdoor_co2_ppm`` solo se usan si vienen (CSV
+antiguos de cuando había medidores de CO₂). ``area_sqm`` y ``capacity`` son los del salón en el catálogo. El estimador no tiene
 estado: cada fila se evalúa por sí sola, con el mismo modelo de fusión que el gemelo digital.
 
 Salida (en pantalla y opcionalmente en JSON):
@@ -31,7 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.domain.occupancy import fuse_occupancy  # noqa: E402
 
-REQUIRED = ("space_id", "co2_ppm", "wifi_devices", "area_sqm", "capacity", "true_people")
+REQUIRED = ("space_id", "area_sqm", "capacity", "true_people")
 BINS = ((0, 50), (50, 70), (70, 85), (85, 101))
 
 
@@ -89,8 +90,8 @@ def evaluate(rows: list[dict], tolerance: float) -> dict:
         yolo = row.get("yolo_people", "")
         yolo_people = _integer(row, "yolo_people", line, 0, 1000) if yolo != "" else None
         outdoor = _number(row, "outdoor_co2_ppm", line, 300, 1000) if row.get("outdoor_co2_ppm") else 420.0
-        co2 = _number(row, "co2_ppm", line, 0, 10000)
-        wifi = _integer(row, "wifi_devices", line, 0, 10000)
+        co2 = _number(row, "co2_ppm", line, 0, 10000) if row.get("co2_ppm") else None
+        wifi = _integer(row, "wifi_devices", line, 0, 10000) if row.get("wifi_devices") else None
         area = _number(row, "area_sqm", line, 0.1, 100000)
         capacity = _integer(row, "capacity", line, 1, 5000)
         true_people = _integer(row, "true_people", line, 0, 1000)

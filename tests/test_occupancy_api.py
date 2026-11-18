@@ -74,3 +74,19 @@ def test_occupancy_api_rejects_blank_space_id_and_trims_valid_identifiers(client
 @pytest.mark.parametrize("field, value", [("yolo_people", True), ("co2_ppm", True), ("capacity", "36")])
 def test_occupancy_api_rejects_values_of_the_wrong_type(client, field, value):
     assert client.post("/v1/occupancy/estimate", json=reading(**{field: value})).status_code == 422
+
+
+def test_a_camera_only_reading_needs_no_co2_or_wifi(client):
+    body = {"space_id": "421-A", "yolo_people": 10, "area_sqm": 48, "capacity": 36}
+    response = client.post("/v1/occupancy/estimate", json=body)
+    assert response.status_code == 200
+    assert [s["source"] for s in response.json()["sources"]] == ["camara_yolo"]
+    assert response.json()["occupancy_estimate"] == 10
+
+
+def test_camera_down_and_no_wifi_gives_zero_confidence_instead_of_an_error(client):
+    response = client.post("/v1/occupancy/estimate", json={"space_id": "421-A", "area_sqm": 48, "capacity": 36})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["camera_available"] is False and body["sources"] == []
+    assert body["confidence_pct"] == 0.0 and body["sigma_people"] == 5000.0

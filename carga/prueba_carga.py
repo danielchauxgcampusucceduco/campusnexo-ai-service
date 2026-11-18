@@ -27,8 +27,7 @@ def frame(space_id: str, numero: int) -> dict:
     return {"space_id": space_id, "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
             "camera_online": True, "emulated": True,
             "detections": [{"track_id": i, "class": "person", "confidence": 0.9,
-                            "bbox": [0.1 + 0.02 * i, 0.5, 0.12 + 0.02 * i, 0.58]} for i in range(numero % 20)],
-            "sensors": {"co2_ppm": 600, "temperature_c": 18.0, "humidity_pct": 55}}
+                            "bbox": [0.1 + 0.02 * i, 0.5, 0.12 + 0.02 * i, 0.58]} for i in range(numero % 20)]}
 
 
 def resumen(latencias_ms: list[float], errores: int, total: int) -> dict:

@@ -9,8 +9,8 @@ cada umbral de confianza mínima y mide contra la verdad de terreno:
 * la fracción de escenas con docente en las que el docente sigue detectado en su zona (``tasa_docente``).
 
 Entre los umbrales que cumplen la compuerta elige el de **menor varianza del error**, no el de menor MAE: una persona
-falsa compensa a una perdida y hace ver mejor el MAE, pero en un salón vacío es ocupación fantasma (las luces no se
-apagan). La varianza es además lo que el filtro de Kalman del backend supone del ruido de la cámara
+falsa compensa a una perdida y hace ver mejor el MAE, pero en un salón vacío es ocupación fantasma (el salón figura
+ocupado para los estudiantes). La varianza es además lo que el filtro de Kalman del backend supone del ruido de la cámara
 (``KALMAN_CAMERA_VARIANCE``). En empate gana el umbral más bajo, lejos del punto donde empieza a perder personas
 reales. Escribe ``parametros.json``; el publicador de borde lee de ahí su confianza mínima.
 

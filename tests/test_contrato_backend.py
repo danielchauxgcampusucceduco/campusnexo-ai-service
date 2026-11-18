@@ -7,7 +7,6 @@ from scripts.exportar_openapi import contrato, main
 RUTAS_DEL_BACKEND = {
     "/v1/occupancy/estimate": "post",
     "/v1/rooms/assignment": "post",
-    "/v1/sensors/anomalies": "post",
     "/v1/occupancy/forecast": "post",
 }
 
@@ -22,5 +21,6 @@ def test_exporta_el_contrato_como_json(tmp_path):
     salida = tmp_path / "openapi.json"
     assert main(["--salida", str(salida)]) == 0
     esquema = json.loads(salida.read_text(encoding="utf-8"))
-    assert esquema["info"]["version"] == "0.4.0"
+    assert esquema["info"]["version"] == "0.5.0"
     assert set(RUTAS_DEL_BACKEND) <= set(esquema["paths"])
+    assert "/v1/sensors/anomalies" not in esquema["paths"], "la salud de sensores se retiró con el hardware"

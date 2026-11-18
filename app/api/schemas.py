@@ -5,7 +5,6 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.settings import (
-    MAX_ANOMALY_READINGS,
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
     MAX_ASSIGNMENT_ATTENDANCE,
@@ -25,8 +24,9 @@ class OccupancyInput(StrictInput):
     """Raw measurements of one room. ``yolo_people`` is the camera's own count, never a fused estimate."""
     space_id: str = Field(min_length=1, max_length=32)
     yolo_people: int | None = Field(default=None, ge=0, le=1000, strict=True)
-    co2_ppm: float = Field(ge=0, le=10000, strict=True)
-    wifi_devices: int = Field(ge=0, le=10000, strict=True)
+    # Solo cámara en el campus. Wi-Fi entra si llega; co2_ppm se acepta por compatibilidad con clientes antiguos.
+    co2_ppm: float | None = Field(default=None, ge=0, le=10000, strict=True)
+    wifi_devices: int | None = Field(default=None, ge=0, le=10000, strict=True)
     outdoor_co2_ppm: float = Field(default=420, ge=300, le=1000, strict=True)
     area_sqm: float = Field(gt=0, le=100000, strict=True)
     capacity: int = Field(ge=1, le=5000, strict=True)
@@ -134,36 +134,6 @@ class OccupancyEstimateOutput(BaseModel):
 
 class OccupancyBatchOutput(BaseModel):
     estimates: list[OccupancyEstimateOutput]
-
-
-class SensorReadingInput(StrictInput):
-    """One stored reading of a room. Values are checked for plausibility, not rejected: that is the point."""
-    space_id: str = Field(min_length=1, max_length=32)
-    timestamp: AwareDatetime
-    co2_ppm: float = Field(allow_inf_nan=False, strict=True)
-    temperature_c: float = Field(allow_inf_nan=False, strict=True)
-    humidity_pct: float = Field(allow_inf_nan=False, strict=True)
-    illuminance_lux: float = Field(allow_inf_nan=False, strict=True)
-    active_power_kw: float = Field(allow_inf_nan=False, strict=True)
-
-
-class AnomaliesInput(StrictInput):
-    readings: list[SensorReadingInput] = Field(max_length=MAX_ANOMALY_READINGS)
-
-
-class AnomalyOutput(BaseModel):
-    space_id: str
-    sensor: str
-    timestamp: datetime
-    kind: Literal["FUERA_DE_RANGO", "VALOR_PEGADO", "SALTO"]
-    value: float
-    detail: str
-
-
-class AnomaliesOutput(BaseModel):
-    anomalies: list[AnomalyOutput]
-    readings_analyzed: int
-    method: str
 
 
 class OccupancySampleInput(StrictInput):

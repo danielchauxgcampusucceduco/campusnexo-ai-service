@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.api.schemas import CapabilitiesOutput
 from app.settings import (
-    MAX_ANOMALY_READINGS,
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
     MAX_ASSIGNMENT_ATTENDANCE,
@@ -39,16 +38,14 @@ def capabilities():
         "api_version": "v1",
         "features": [
             {"name": "occupancy", "mode": "fusion_varianza_inversa_no_calibrada",
-             "summary": "Fusión sin estado de cámara opcional, CO2 y Wi-Fi con el modelo del gemelo; "
-                        "confidence_pct no es probabilidad."},
+             "summary": "Fusión sin estado de la cámara y, si llega, Wi-Fi con el modelo del gemelo; "
+                        "sin mediciones responde σ alta. confidence_pct no es probabilidad."},
             {"name": "occupancy_batch", "mode": "stateless_fusion_per_reading",
              "summary": "Procesa en una petición varias lecturas; cada una se fusiona por separado."},
             {"name": "room_assignment", "mode": "exact_rectangular_matching",
              "summary": "Minimiza potencia nominal para instancias pequeñas."},
             {"name": "vision", "mode": "optional_yolo",
              "summary": "Conteo disponible solo si el extra de visión y sus pesos están configurados."},
-            {"name": "sensor_anomalies", "mode": "rango_fisico_valor_pegado_salto_mad",
-             "summary": "Señala lecturas imposibles, sensores pegados y saltos bruscos; no corrige datos."},
             {"name": "occupancy_forecast", "mode": "perfil_semanal_suavizado",
              "summary": "Pronóstico por franja horaria aprendido del historial del salón; sin estado."},
         ],
@@ -60,7 +57,6 @@ def capabilities():
             "room_capacity": MAX_ROOM_CAPACITY,
             "room_power_kw": MAX_ROOM_POWER_KW,
             "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
-            "anomaly_readings": MAX_ANOMALY_READINGS,
             "forecast_history": MAX_FORECAST_HISTORY,
             "forecast_hours": MAX_FORECAST_HOURS,
         },

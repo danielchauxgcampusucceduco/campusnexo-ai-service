@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.settings import (
-    MAX_ANOMALY_READINGS,
     MAX_ASSIGNMENT_COURSES,
     MAX_ASSIGNMENT_ROOMS,
     MAX_ASSIGNMENT_ATTENDANCE,
@@ -24,7 +23,7 @@ def test_capabilities_endpoint_documents_algorithms_and_operational_limits():
     assert body["service"] == "CampusNexo AI Service"
     assert features["occupancy"]["mode"] == "fusion_varianza_inversa_no_calibrada"
     assert features["occupancy_batch"]["mode"] == "stateless_fusion_per_reading"
-    assert features["sensor_anomalies"]["mode"] == "rango_fisico_valor_pegado_salto_mad"
+    assert "sensor_anomalies" not in features, "ya no hay sensores ambientales en el campus"
     assert features["occupancy_forecast"]["mode"] == "perfil_semanal_suavizado"
     assert features["vision"]["mode"] == "optional_yolo"
     assert "thermal" not in features, "el modelo térmico vive solo en el backend Java"
@@ -36,7 +35,6 @@ def test_capabilities_endpoint_documents_algorithms_and_operational_limits():
         "room_capacity": MAX_ROOM_CAPACITY,
         "room_power_kw": MAX_ROOM_POWER_KW,
         "vision_image_bytes": MAX_VISION_IMAGE_BYTES,
-        "anomaly_readings": MAX_ANOMALY_READINGS,
         "forecast_history": MAX_FORECAST_HISTORY,
         "forecast_hours": MAX_FORECAST_HOURS,
     }

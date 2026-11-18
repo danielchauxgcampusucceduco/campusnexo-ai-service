@@ -29,10 +29,11 @@ def test_aligned_corners_are_refused(tmp_path):
 
 def test_messages_match_the_backend_contracts():
     instante = datetime(2026, 10, 24, 13, 0, tzinfo=timezone.utc)
-    frame = contrato.frame_camara("303-A", instante, [(1, 0.5, 0.15, 0.91)], {"co2_ppm": 600}, emulado=True)
+    frame = contrato.frame_camara("303-A", instante, [(1, 0.5, 0.15, 0.91)], emulado=True)
     assert frame["emulated"] is True
+    assert set(frame) == {"space_id", "timestamp", "camera_online", "emulated", "detections"}, "solo cámara, sin sensors"
     assert frame["detections"][0]["bbox"] == [0.48, 0.11, 0.52, 0.19]
-    assert contrato.frame_camara("303-A", instante, [(1, 0.5, 0.5, 0.9)], {}, True, camara_en_linea=False)[
+    assert contrato.frame_camara("303-A", instante, [(1, 0.5, 0.5, 0.9)], True, camara_en_linea=False)[
         "detections"] == []
     puestos = [PuestoVisto(2, 1, 0.1, 0.5, True, False, True)]
     assert contrato.descubrimiento("301-A", puestos, True)["puestos"][0] == {

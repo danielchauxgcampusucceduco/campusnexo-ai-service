@@ -5,7 +5,7 @@ Esta carpeta no trae resultados: trae el método para producirlos.
 ## Protocolo sugerido
 
 1. Elegir salones y franjas (por ejemplo, 3 salones × 5 días × cada 5 minutos en horario de clase).
-2. En cada instante registrar lo que el sistema recibe (`yolo_people` si hay cámara, `co2_ppm`, `wifi_devices`, `outdoor_co2_ppm`), el área y la capacidad del salón (`area_sqm`, `capacity`, las del catálogo) y el **conteo de referencia** `true_people`, hecho por una persona sin registrar identidades.
+2. En cada instante registrar lo que el sistema recibe (`yolo_people` si hay cámara y `wifi_devices` si se cuenta; CSV antiguos con `co2_ppm` y `outdoor_co2_ppm` siguen aceptándose), el área y la capacidad del salón (`area_sqm`, `capacity`, las del catálogo) y el **conteo de referencia** `true_people`, hecho por una persona sin registrar identidades.
 3. Guardar las filas en un CSV con las columnas de `plantilla_conteos.csv`. El estimador no tiene memoria: cada fila se evalúa sola, igual que una petición al servicio.
 4. Separar una parte del CSV para ajustar parámetros y otra, distinta, para medir. No medir con los mismos datos con que se ajustó.
 5. Ejecutar:
@@ -14,7 +14,7 @@ Esta carpeta no trae resultados: trae el método para producirlos.
    python eval/evaluate.py conteos.csv --tolerance 2 --json resultados.json
    ```
 
-6. Revisar n, MAE, RMSE y sesgo globales, por salón y con/sin cámara, además de la tabla de calibración. Acompañar el resultado con la versión del servicio, el CSV y las condiciones (luz, oclusiones, ventilación).
+6. Revisar n, MAE, RMSE y sesgo globales, por salón y con/sin cámara, además de la tabla de calibración. Acompañar el resultado con la versión del servicio, el CSV y las condiciones (luz, oclusiones, ángulo de la cámara).
 
 El evaluador valida que las mediciones sean finitas y estén dentro de los rangos de la API; indica el número de fila cuando un registro no cumple el contrato. La tolerancia de error debe ser finita y no negativa.
 

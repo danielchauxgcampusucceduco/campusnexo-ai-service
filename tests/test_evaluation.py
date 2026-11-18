@@ -154,8 +154,13 @@ def test_csv_reader_rejects_duplicate_headers_before_values_are_overwritten():
 def test_csv_reader_reports_missing_required_columns_at_the_header():
     import io
 
-    with pytest.raises(ValueError, match="faltan columnas requeridas: wifi_devices"):
+    with pytest.raises(ValueError, match="faltan columnas requeridas: area_sqm, capacity"):
         read_rows(io.StringIO("space_id,co2_ppm,true_people\nA-301,500,5\n"))
+
+
+def test_evaluation_accepts_camera_only_rows_without_co2_or_wifi():
+    rows = [{"space_id": "A", "yolo_people": "7", "area_sqm": "48", "capacity": "36", "true_people": "7"}]
+    assert evaluate(rows, tolerance=1)["overall"] == {"n": 1, "mae": 0.0, "rmse": 0.0, "bias": 0.0}
 
 
 @pytest.mark.parametrize(

@@ -1,11 +1,16 @@
 """Estimación de ocupación por fusión de mediciones: el mismo modelo que el gemelo digital en Java.
 
-Tres fuentes, cada una con su incertidumbre:
+La fuente principal es la cámara; las demás son opcionales y solo entran si llegan:
 
 * conteo de la cámara (YOLO en el borde), cuando llega: varianza 0,64 personas²;
+* dispositivos Wi-Fi a 0,8 personas por dispositivo, con error relativo de 30 % (más 2 de piso), si llegan;
 * CO₂ por balance de masa en estado estable: ``(co2 − exterior) · área / 1000`` personas, con error
-  relativo de 35 % (más 2 personas de piso);
-* dispositivos Wi-Fi a 0,8 personas por dispositivo, con error relativo de 30 % (más 2 de piso).
+  relativo de 35 % (más 2 personas de piso). El campus ya no tiene medidores de CO₂; se conserva solo por
+  compatibilidad con clientes que todavía lo envían.
+
+Sin ninguna medición (cámara caída y sin Wi-Fi) no hay nada que fusionar: se responde 0 personas con
+``σ = NO_DATA_SIGMA`` (5000, la capacidad máxima admitida), de modo que ``confidence_pct`` sale 0 para cualquier
+salón y ``sources`` va vacío. Es la creencia previa no informada sin actualizar: "no se sabe", no "está vacío".
 
 La estimación es la media ponderada por el inverso de la varianza de las fuentes disponibles: es la
 actualización de Kalman desde una creencia previa no informada. El servicio **no guarda estado** entre
@@ -29,6 +34,7 @@ PEOPLE_PER_DEVICE = 0.8
 CO2_PPM_PER_PERSON_SQM = 1000.0
 MIN_VARIANCE = 1.0
 ERROR_FLOOR_PEOPLE = 2.0
+NO_DATA_SIGMA = 5000.0
 
 
 @dataclass(frozen=True)
@@ -70,23 +76,28 @@ def _relative_variance(people: float, relative_error: float) -> float:
     return max(MIN_VARIANCE, sigma * sigma)
 
 
-def fuse_occupancy(camera_people: int | None, co2_ppm: float, wifi_devices: int, area_sqm: float,
+def fuse_occupancy(camera_people: int | None, co2_ppm: float | None, wifi_devices: int | None, area_sqm: float,
                    outdoor_co2_ppm: float = 420.0) -> Fusion:
-    """Fusiona una lectura sin estado previo. Lanza ``ValueError`` si alguna medición es inválida."""
+    """Fusiona una lectura sin estado previo; ``None`` es "no llegó". Lanza ``ValueError`` si una medición es inválida."""
     if camera_people is not None:
         _count("camera_people", camera_people, 1000)
-    co2 = _finite("co2_ppm", co2_ppm, 0, 10000)
-    _count("wifi_devices", wifi_devices, 10000)
+    co2 = None if co2_ppm is None else _finite("co2_ppm", co2_ppm, 0, 10000)
+    if wifi_devices is not None:
+        _count("wifi_devices", wifi_devices, 10000)
     area = _finite("area_sqm", area_sqm, 0.1, 100000)
     outdoor = _finite("outdoor_co2_ppm", outdoor_co2_ppm, 300, 1000)
 
     observations: list[tuple[str, float, float]] = []
     if camera_people is not None:
         observations.append(("camara_yolo", float(camera_people), CAMERA_VARIANCE))
-    from_co2 = max(0.0, co2 - outdoor) * area / CO2_PPM_PER_PERSON_SQM
-    observations.append(("co2_balance_masico", from_co2, _relative_variance(from_co2, CO2_RELATIVE_ERROR)))
-    from_wifi = wifi_devices * PEOPLE_PER_DEVICE
-    observations.append(("wifi_dispositivos", from_wifi, _relative_variance(from_wifi, WIFI_RELATIVE_ERROR)))
+    if co2 is not None:
+        from_co2 = max(0.0, co2 - outdoor) * area / CO2_PPM_PER_PERSON_SQM
+        observations.append(("co2_balance_masico", from_co2, _relative_variance(from_co2, CO2_RELATIVE_ERROR)))
+    if wifi_devices is not None:
+        from_wifi = wifi_devices * PEOPLE_PER_DEVICE
+        observations.append(("wifi_dispositivos", from_wifi, _relative_variance(from_wifi, WIFI_RELATIVE_ERROR)))
+    if not observations:
+        return Fusion(0.0, NO_DATA_SIGMA, ())
 
     information = sum(1 / variance for _, _, variance in observations)
     estimate = max(0.0, sum(people / variance for _, people, variance in observations) / information)
