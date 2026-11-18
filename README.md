@@ -12,15 +12,14 @@ Aprendizaje automático y visión de **CampusNexo**, el gemelo digital del campu
 Cámara ─▶ edge/ (YOLO + homografía, en el salón) ─HTTPS─▶ backend Java ─HTTPS + X-API-Key─▶ app/ (este servicio)
 ```
 
-Ninguna imagen sale del salón: el borde envía posiciones en el piso y conteos.
+Ninguna imagen sale del salón: el borde envía posiciones en el piso y conteos. El único sensor de un salón es su cámara PoE, conectada a un portátil de borde con YOLO; no hay medidores de CO₂, clima ni energía. Los PC aportan su latido (`agente_pc.py`).
 
 ## API para el backend (`app/`)
 
 | Ruta | Qué hace |
 |---|---|
-| `POST /v1/occupancy/estimate` y `/batch` | Fusión sin estado de cámara, CO₂ y Wi-Fi con **el mismo modelo y parámetros** que el filtro de Kalman del gemelo en Java. Ambos repos prueban `tests/fusion_golden_cases.csv`. |
+| `POST /v1/occupancy/estimate` y `/batch` | Fusión sin estado de la cámara y, si llega, del conteo Wi-Fi, con **el mismo modelo y parámetros** que el filtro de Kalman del gemelo en Java. `co2_ppm` y `wifi_devices` son opcionales; `co2_ppm` se acepta solo por compatibilidad con clientes antiguos. Sin ninguna medición responde 0 personas con σ = 5000 y `confidence_pct` 0 (no se sabe, no "vacío"). Ambos repos prueban `tests/fusion_golden_cases.csv`. |
 | `POST /v1/rooms/assignment` | Asignación óptima curso → salón (húngaro rectangular) que minimiza la potencia nominal. |
-| `POST /v1/sensors/anomalies` | Salud de sensores: valores fuera de rango, sensores pegados y saltos bruscos (MAD robusta). |
 | `POST /v1/occupancy/forecast` | Pronóstico por franja horaria con perfil semanal suavizado, aprendido del historial del salón (MongoDB). |
 | `POST /v1/vision/count` | Conteo YOLO opcional (extra `vision`); sin el extra responde 503, nunca un conteo inventado. |
 | `GET /health`, `/ready`, `/v1/capabilities` | Estado y límites publicados. |
@@ -32,7 +31,8 @@ Con `AI_API_KEY` (mínimo 24 caracteres; obligatoria en producción) toda ruta s
 | Programa | Para qué |
 |---|---|
 | `calibrar.py` | Una vez al instalar la cámara: se marcan las 4 esquinas del piso y se guarda `calibracion-<salón>.json`. |
-| `yolo_edge_publisher.py` | YOLO + ByteTrack; proyecta cada persona al piso y envía frames por HTTPS (o MQTT). Modos `--descubrir`, `--auditar` y `--emparejar`. |
+| `yolo_edge_publisher.py` | YOLO + ByteTrack; proyecta cada persona al piso y envía frames solo de cámara (sin bloque `sensors`) por HTTPS (o MQTT). Modos `--descubrir`, `--auditar` y `--emparejar`. |
+| `emulador/` | Piloto sin hardware: emula la cámara y los latidos de los PC con `emulated: true` y escribe la verdad de terreno para `eval/`. |
 | `agente_pc.py` | En cada PC: latido cada minuto (la cámara no ve las torres) y patrón a pantalla completa durante su ranura de emparejamiento. Solo biblioteca estándar. |
 
 **Registro automático de puestos:**

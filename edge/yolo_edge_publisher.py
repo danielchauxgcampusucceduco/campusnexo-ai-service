@@ -96,15 +96,13 @@ def _archivo_puestos(space_id: str) -> Path:
 
 
 def publicar(args, space_id, matriz, backend, enviar_mqtt):
-    sensores = {"co2_ppm": args.co2, "temperature_c": args.temperature, "humidity_pct": args.humidity,
-                "illuminance_lux": args.lux, "wifi_devices": args.wifi, "active_power_kw": args.power}
     ultimo = 0.0
     for resultado in _resultados(args):
         if time.monotonic() - ultimo < args.intervalo:
             continue
         cajas, clases, confianzas, tracks = _arreglos(resultado)
         personas = personas_en_piso(cajas, clases, confianzas, tracks, matriz, args.confianza_minima)
-        frame = contrato.frame_camara(space_id, datetime.now(timezone.utc), personas, sensores, emulado=False)
+        frame = contrato.frame_camara(space_id, datetime.now(timezone.utc), personas, emulado=False)
         if enviar_mqtt:
             enviar_mqtt(frame)
         else:
@@ -195,7 +193,7 @@ def main() -> None:
     parser.add_argument("--source", required=True, help="índice de cámara, URL RTSP o ruta de video")
     parser.add_argument("--backend", default=os.environ.get("CAMPUSNEXO_BACKEND_URL", "http://localhost:8080"))
     parser.add_argument("--clave", default=os.environ.get("CAMPUSNEXO_SENSOR_KEY", ""), help="clave de sensor")
-    parser.add_argument("--model", default=os.environ.get("YOLO_MODEL", "yolo11n.pt"))
+    parser.add_argument("--model", default=os.environ.get("YOLO_MODEL", "yolo26n.pt"))
     parser.add_argument("--intervalo", type=float, default=2.0, help="segundos entre frames publicados")
     parser.add_argument("--confianza-minima", type=float, default=confianza_por_defecto())
     modo = parser.add_mutually_exclusive_group()
@@ -206,13 +204,6 @@ def main() -> None:
     parser.add_argument("--duracion", type=float, default=300, help="segundos vigilando el emparejamiento")
     parser.add_argument("--mqtt", help="broker MQTT en vez de HTTPS")
     parser.add_argument("--mqtt-port", type=int, default=1883)
-    # Valores del salón cuando no tiene Arduino: el contrato del frame los exige; el Arduino los reemplaza.
-    parser.add_argument("--co2", type=float, default=420)
-    parser.add_argument("--temperature", type=float, default=18.0)
-    parser.add_argument("--humidity", type=float, default=55)
-    parser.add_argument("--lux", type=float, default=0)
-    parser.add_argument("--wifi", type=int, default=0)
-    parser.add_argument("--power", type=float, default=0)
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")  # la consola de Windows usa otra página de códigos
 

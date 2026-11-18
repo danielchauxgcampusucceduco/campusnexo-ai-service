@@ -20,8 +20,10 @@ def _caja(x: float, y: float) -> list[float]:
 
 
 def frame_camara(space_id: str, instante: datetime, personas: list[tuple[int, float, float, float]],
-                 sensores: dict, emulado: bool, camara_en_linea: bool = True) -> dict:
-    """Frame para ``POST /api/v1/twin/telemetry``. ``personas``: (track_id, x, y, confianza) en el piso."""
+                 emulado: bool, camara_en_linea: bool = True) -> dict:
+    """Frame para ``POST /api/v1/twin/telemetry``. ``personas``: (track_id, x, y, confianza) en el piso.
+
+    Solo cámara: el campus no tiene sensores ambientales, así que el frame no lleva bloque ``sensors``."""
     return {
         "space_id": space_id,
         "timestamp": instante.isoformat(timespec="seconds"),
@@ -29,16 +31,7 @@ def frame_camara(space_id: str, instante: datetime, personas: list[tuple[int, fl
         "emulated": emulado,
         "detections": [{"track_id": track, "class": "person", "confidence": round(confianza, 3), "bbox": _caja(x, y)}
                        for track, x, y, confianza in personas] if camara_en_linea else [],
-        "sensors": sensores,
     }
-
-
-def lectura_ambiente(space_id: str, instante: datetime, temperatura_c: float, humedad_pct: float, co2_ppm: float,
-                     lux: float, luces: bool, equipos: int) -> dict:
-    """Lectura tipo Arduino para ``POST /api/v1/twin/environment``."""
-    return {"space_id": space_id, "timestamp": instante.isoformat(timespec="seconds"), "temperature_c": temperatura_c,
-            "humidity_pct": humedad_pct, "co2_ppm": co2_ppm, "illuminance_lux": lux, "lights_on": luces,
-            "devices_on": equipos}
 
 
 def descubrimiento(space_id: str, puestos, emulado: bool) -> dict:
