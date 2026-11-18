@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "campusnexo-ai"
-version = "0.4.0"
-description = "Aprendizaje automático de CampusNexo: ocupación, asignación de salones, anomalías de sensores, pronóstico y visión de borde"
+version = "0.5.0"
+description = "Aprendizaje automático de CampusNexo: ocupación, asignación de salones, pronóstico y visión de borde"
 requires-python = ">=3.11"
 # Exact versions: the same build today and on the day of the defense.
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # YOLO and OpenCV: the edge camera, calibration, retraining and /v1/vision/count.
-vision = ["ultralytics==8.3.150", "opencv-python-headless==4.11.0.86"]
+vision = ["ultralytics==8.4.215", "opencv-python-headless==4.11.0.86"]
 # MQTT publishing from the edge, when a broker is used instead of HTTPS.
 edge = ["paho-mqtt==2.1.0"]
 # Load test of the backend ingestion (QA-3).
