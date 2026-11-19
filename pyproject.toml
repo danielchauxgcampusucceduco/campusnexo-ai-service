@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.115.14",
     "uvicorn[standard]==0.34.3",
-    "pydantic==2.11.7",
+    "pydantic==2.14.1",
     "numpy==2.2.6",
     # zoneinfo needs the IANA database; Windows and slim images do not ship it.
     "tzdata==2025.2",
