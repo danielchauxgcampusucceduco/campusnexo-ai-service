@@ -14,7 +14,7 @@ dependencies = [
     "pydantic==2.11.7",
     "numpy==2.2.6",
     # zoneinfo needs the IANA database; Windows and slim images do not ship it.
-    "tzdata==2025.2",
+    "tzdata==2026.5",
 ]
 
 [project.optional-dependencies]
